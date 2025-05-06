@@ -89,4 +89,6 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.github.jan-tennert.supabase:realtime-kt")
 
+
+    implementation(libs.androidx.material.icons.extended)
 }

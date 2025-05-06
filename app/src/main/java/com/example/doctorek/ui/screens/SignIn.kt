@@ -1,0 +1,275 @@
+package com.example.doctorek.ui.screens
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
+import androidx.navigation.NavController
+import com.example.doctorek.R
+import com.example.doctorek.Screens
+
+
+@Composable
+fun SignInScreen(
+    navController: NavController,
+    onFacebookClick: () -> Unit = {},
+    onGoogleClick: () -> Unit = {},
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(64.dp))
+
+        // App Logo
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .clip(CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            // Using a placeholder "M" icon since we don't have the actual resource
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder for logo
+                contentDescription = "App Logo",
+                alignment = Alignment.Center,
+                contentScale = ContentScale.FillHeight
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Sign In Text
+        Text(
+            text = "Sign In",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        // Email Field
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Email",
+                fontSize = 14.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                placeholder = { Text(text = "example@domain.com", color = Color.Gray) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = colorResource(id = R.color.light_blue),
+                    focusedBorderColor = colorResource(id = R.color.blue),
+                    cursorColor = colorResource(id = R.color.blue)
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Password Field
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Password",
+                fontSize = 14.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                placeholder = { Text(text = "••••••••••••••", color = Color.Gray) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                singleLine = true,
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if(passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                            tint = Color.Gray
+                        )
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = colorResource(R.color.light_blue),
+                    focusedBorderColor = colorResource(id = R.color.blue),
+                    cursorColor = colorResource(id = R.color.blue)
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Sign In Button
+        Button(
+            onClick = {
+                // Handle sign in logic here
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colorResource(id = R.color.blue)
+            )
+        ) {
+            Text(
+                text = "Sign In",
+                fontSize = 16.sp,
+                color = Color.White
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Forgot Password
+        TextButton(
+            onClick = {
+                // Handle forgot password action
+            }
+        ) {
+            Text(
+                text = "Forget The Password ?",
+                color = colorResource(id = R.color.blue),
+                fontSize = 14.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Or continue with
+        Text(
+            text = "or continue with",
+            color = Color.Gray,
+            fontSize = 14.sp
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Social Login Buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Facebook Button
+            OutlinedButton(
+                onClick = onFacebookClick,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(24.dp),
+                border = ButtonDefaults.outlinedButtonBorder.copy(
+                    width = 1.dp
+                )
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.facebook_logo), // Placeholder for Facebook icon
+                    contentDescription = "Facebook Icon",
+                    modifier = Modifier.size(40.dp)
+                )
+                Text(
+                    text = "Facebook",
+                    color = Color.Black,
+                    fontSize = 14.sp
+                )
+            }
+
+            // Google Button
+            OutlinedButton(
+                onClick = onGoogleClick,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(24.dp),
+                border = ButtonDefaults.outlinedButtonBorder.copy(
+                    width = 1.dp
+                )
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.google_logo), // Placeholder for Google icon
+                    contentDescription = "Google Icon",
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Google",
+                    color = Color.Black,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Don't have an account text
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Don't have an account ? ",
+                color = Color.Gray,
+                fontSize = 14.sp
+            )
+            TextButton(
+                onClick = {
+                    navController.navigate(Screens.Signup.route)
+                },
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Text(
+                    text = "Sign Up",
+                    color = colorResource(id = R.color.blue),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}

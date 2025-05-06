@@ -1,5 +1,6 @@
 package com.example.doctorek.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +22,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -28,13 +31,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.doctorek.R
+import com.example.doctorek.Screens
+import com.example.doctorek.data.auth.SharedPrefs
 import kotlinx.coroutines.launch
 
 data class SlideData(
@@ -46,6 +54,10 @@ data class SlideData(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SlideShow(navController: NavController) {
+    val context = LocalContext.current
+    val sharedPrefs = SharedPrefs(context)
+    sharedPrefs.setFirstTime(false)
+
     val slides = listOf(
         SlideData(
             imageRes = R.drawable.person1,
@@ -67,29 +79,36 @@ fun SlideShow(navController: NavController) {
     val pagerState = rememberPagerState(pageCount = { slides.size })
     val coroutineScope = rememberCoroutineScope()
 
+    // List of background colors for each slide
+    val slideColors = listOf(
+        colorResource(id = R.color.light_blue),
+        colorResource(id = R.color.pink),
+        colorResource(id = R.color.bottle_green)
+    )
+
     Column(
-        modifier = Modifier.fillMaxSize()
-            .padding(top=30.dp),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Slideshow area (60% horizontally of the screen)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1.4f)
+                .background(slideColors[pagerState.currentPage]),
             contentAlignment = Alignment.Center
         ) {
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.Bottom,
             ) { page ->
                 Image(
                     painter = painterResource(id = slides[page].imageRes),
                     contentDescription = "Slide ${page + 1}",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(16.dp)),
+                        .aspectRatio(1f),
                     contentScale = ContentScale.FillHeight
                 )
             }
@@ -112,7 +131,8 @@ fun SlideShow(navController: NavController) {
                     text = slides[pagerState.currentPage].title,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    color = colorResource(R.color.blue)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -127,7 +147,7 @@ fun SlideShow(navController: NavController) {
 
             // Indicator dots
             Row(
-                modifier = Modifier.padding(top = 16.dp,bottom = 120.dp),
+                modifier = Modifier.padding(top = 16.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
                 repeat(slides.size) { index ->
@@ -137,7 +157,7 @@ fun SlideShow(navController: NavController) {
                             .padding(horizontal = 4.dp)
                             .size(if (isSelected) 12.dp else 8.dp)
                             .background(
-                                color = if (isSelected) MaterialTheme.colorScheme.primary
+                                color = if (isSelected) colorResource(R.color.blue)
                                 else MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                                 shape = CircleShape
                             )
@@ -147,24 +167,38 @@ fun SlideShow(navController: NavController) {
 
             // Buttons
             Column(
-                modifier = Modifier.fillMaxWidth(0.8f),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxWidth(0.8f)
+                    .fillMaxHeight()
+                    .padding(bottom = 30.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
             ) {
+                OutlinedButton(
+                    onClick = { navController.navigate(Screens.Onboarding.route) },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, color = colorResource(id = R.color.blue)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colorResource(id = R.color.blue)
+                    ),
+                ) {
+                    Text(text = "Skip", modifier = Modifier.padding(vertical = 4.dp))
+                }
+
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 Button(
-                    onClick = { navController.navigate("signup") },
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = { navController.navigate(Screens.Signup.route) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colorResource(id = R.color.blue),
+                        contentColor = Color.White
+                    )
                 ) {
                     Text(text = "Sign Up", modifier = Modifier.padding(vertical = 4.dp))
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedButton(
-                    onClick = { navController.navigate("onboarding") },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(text = "Skip", modifier = Modifier.padding(vertical = 4.dp))
-                }
             }
         }
     }

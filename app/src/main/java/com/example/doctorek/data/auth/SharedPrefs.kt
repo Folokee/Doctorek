@@ -22,6 +22,14 @@ class SharedPrefs(private val context: Context){
         return sharedPreferences.getString("refresh_token", null)
     }
 
+    fun setFirstTime(value: Boolean) {
+        sharedPreferences.edit() { putBoolean("onboarding", value) }
+    }
+
+    fun getFirstTime(): Boolean {
+        return sharedPreferences.getBoolean("onboarding", true)
+    }
+
     fun clearAll() {
         sharedPreferences.edit() { clear() }
     }
