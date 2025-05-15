@@ -52,7 +52,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.doctorek.R
+import com.example.doctorek.Screens
 import com.example.doctorek.ui.components.DoctorekAppBar
+
+// Define a consistent horizontal padding
+val horizontalPadding = 16.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,7 +86,9 @@ fun HomeScreen(navController: NavController) {
                     },
                     actions = {
                         IconButton(
-                            onClick = { },
+                            onClick = { 
+                                navController.navigate(Screens.FavoriteDoctors.route)
+                            },
                             modifier = Modifier
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(colorResource(id = R.color.light_blue).copy(alpha = 0.1f))
@@ -116,7 +122,7 @@ fun HomeScreen(navController: NavController) {
 
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = horizontalPadding, vertical = 8.dp)
             ) {
                 OutlinedTextField(
                     value = searchQuery,
@@ -159,7 +165,7 @@ fun HomeScreen(navController: NavController) {
                     Text(
                         text = "View all",
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.primary,
+                            color = colorResource(id = R.color.nav_bar_active_item),
                             fontWeight = FontWeight.SemiBold
                         ),
                         modifier = Modifier.clickable { }
@@ -195,7 +201,7 @@ fun HomeScreen(navController: NavController) {
                     Text(
                         text = "View all",
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.primary,
+                            color = colorResource(id = R.color.nav_bar_active_item),
                             fontWeight = FontWeight.SemiBold
                         ),
                         modifier = Modifier.clickable { }
@@ -232,7 +238,7 @@ fun FlowRow(
     Layout(
         modifier = modifier,
         content = content
-    ) { measurables, constraints ->
+    ) { measurables, constraints -> 
         val rows = mutableListOf<List<Placeable>>()
         val itemWidth = constraints.maxWidth / maxItemsInEachRow
 
@@ -326,7 +332,7 @@ fun DoctorCard(
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp) // Added elevation
     ) {
         Column {
             Box(

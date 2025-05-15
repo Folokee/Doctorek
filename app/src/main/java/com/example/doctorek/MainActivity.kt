@@ -12,9 +12,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.doctorek.data.auth.SharedPrefs
 import com.example.doctorek.ui.screens.AppointmentsScreen
+import com.example.doctorek.ui.screens.FavoriteDoctorsScreen
 import com.example.doctorek.ui.screens.HomeScreen
 import com.example.doctorek.ui.screens.MainScreen
 import com.example.doctorek.ui.screens.Onboarding
+import com.example.doctorek.ui.screens.PrescriptionsScreen
 import com.example.doctorek.ui.screens.ProfileDetailsScreen
 import com.example.doctorek.ui.screens.SignInScreen
 import com.example.doctorek.ui.screens.SignUpScreen
@@ -65,6 +67,9 @@ class MainActivity : ComponentActivity() {
             composable(Screens.Main.route) { 
                 MainScreen(navController) 
             }
+            composable(Screens.FavoriteDoctors.route) {
+                FavoriteDoctorsScreen(navController)
+            }
         }
     }
 }
@@ -76,6 +81,8 @@ sealed class Screens(val route : String){
     object Onboarding : Screens("onboarding")
     object ProfileDetails : Screens("profile_details")
     object Main : Screens("main")
+    
+    object FavoriteDoctors : Screens("favorite_doctors")
     
     // Nested screens for bottom navigation
     object Home : Screens("home")
