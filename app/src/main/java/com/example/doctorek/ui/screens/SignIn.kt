@@ -3,8 +3,10 @@ package com.example.doctorek.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,10 +29,10 @@ import androidx.navigation.NavController
 import com.example.doctorek.R
 import com.example.doctorek.Screens
 
-
 @Composable
 fun SignInScreen(
     navController: NavController,
+    onSignInSuccess: () -> Unit = {},
     onFacebookClick: () -> Unit = {},
     onGoogleClick: () -> Unit = {},
 ) {
@@ -42,21 +44,20 @@ fun SignInScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
-        // App Logo
         Box(
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            // Using a placeholder "M" icon since we don't have the actual resource
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder for logo
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "App Logo",
                 alignment = Alignment.Center,
                 contentScale = ContentScale.FillHeight
@@ -65,7 +66,6 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Sign In Text
         Text(
             text = "Sign In",
             fontSize = 24.sp,
@@ -75,7 +75,6 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Email Field
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -105,7 +104,6 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Password Field
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -129,7 +127,7 @@ fun SignInScreen(
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
-                            imageVector = if(passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                             contentDescription = if (passwordVisible) "Hide password" else "Show password",
                             tint = Color.Gray
                         )
@@ -145,10 +143,9 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Sign In Button
         Button(
             onClick = {
-                // Handle sign in logic here
+                onSignInSuccess()
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -167,10 +164,8 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Forgot Password
         TextButton(
             onClick = {
-                // Handle forgot password action
             }
         ) {
             Text(
@@ -182,7 +177,6 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Or continue with
         Text(
             text = "or continue with",
             color = Color.Gray,
@@ -191,12 +185,10 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Social Login Buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Facebook Button
             OutlinedButton(
                 onClick = onFacebookClick,
                 modifier = Modifier
@@ -208,7 +200,7 @@ fun SignInScreen(
                 )
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.facebook_logo), // Placeholder for Facebook icon
+                    painter = painterResource(id = R.drawable.facebook_logo),
                     contentDescription = "Facebook Icon",
                     modifier = Modifier.size(40.dp)
                 )
@@ -219,7 +211,6 @@ fun SignInScreen(
                 )
             }
 
-            // Google Button
             OutlinedButton(
                 onClick = onGoogleClick,
                 modifier = Modifier
@@ -231,11 +222,11 @@ fun SignInScreen(
                 )
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.google_logo), // Placeholder for Google icon
+                    painter = painterResource(id = R.drawable.google_logo),
                     contentDescription = "Google Icon",
                     modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "Google",
                     color = Color.Black,
@@ -244,9 +235,8 @@ fun SignInScreen(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Don't have an account text
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,

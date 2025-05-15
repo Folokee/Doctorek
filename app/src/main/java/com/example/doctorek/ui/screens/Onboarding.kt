@@ -22,11 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewFontScale
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.doctorek.R
@@ -36,8 +34,10 @@ import com.example.doctorek.Screens
 fun Onboarding(navController: NavController){
 
     Column(
-        modifier = Modifier.fillMaxSize()
-            .background(Color.White),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
@@ -51,7 +51,6 @@ fun Onboarding(navController: NavController){
                 modifier = Modifier.size(200.dp)
             )
         }
-        // Buttons
         Column(
             modifier = Modifier.fillMaxWidth(0.8f)
                 .fillMaxHeight(),

@@ -21,12 +21,13 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.doctorek.R
-
-
+import com.example.doctorek.ui.components.DoctorekAppBar
 
 @Composable
 fun ProfileDetailsScreen(
+    navController: NavController,
     onBackClick: () -> Unit = {},
     onNextClick: () -> Unit = {}
 ) {
@@ -36,158 +37,136 @@ fun ProfileDetailsScreen(
     var dateOfBirth by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Top App Bar with back button
-        Row(
+    Scaffold(
+        topBar = {
+            DoctorekAppBar(
+                title = "My Profile"
+            )
+        },
+        containerColor = Color.White
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(paddingValues)
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            IconButton(
-                onClick = onBackClick
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .border(2.dp, Color.LightGray, CircleShape)
+                    .clip(CircleShape)
+                    .background(Color.LightGray.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = colorResource(id = R.color.blue)
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile Picture",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(60.dp)
                 )
             }
 
-            Text(
-                text = "Profile Details",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
+            Spacer(modifier = Modifier.height(32.dp))
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Profile Picture Placeholder
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .border(2.dp, Color.LightGray, CircleShape)
-                .clip(CircleShape)
-                .background(Color.LightGray.copy(alpha = 0.3f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Profile Picture",
-                tint = Color.Gray,
-                modifier = Modifier.size(60.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Form Fields
-        ProfileField(
-            label = "Full Name",
-            placeholder = "Full Name",
-            value = fullName,
-            onValueChange = { fullName = it }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        ProfileField(
-            label = "Email",
-            placeholder = "Email",
-            value = email,
-            onValueChange = { email = it }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-
-
-        // Gender Dropdown Field
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = "Gender",
-                fontSize = 14.sp,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(bottom = 8.dp)
+            ProfileField(
+                label = "Full Name",
+                placeholder = "Full Name",
+                value = fullName,
+                onValueChange = { fullName = it }
             )
 
-            OutlinedTextField(
-                value = gender,
-                onValueChange = { gender = it },
-                placeholder = { Text("Gender") }, // This seems to be a typo in the UI mockup
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ProfileField(
+                label = "Email",
+                placeholder = "Email",
+                value = email,
+                onValueChange = { email = it }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Gender",
+                    fontSize = 14.sp,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                OutlinedTextField(
+                    value = gender,
+                    onValueChange = { gender = it },
+                    placeholder = { Text("Gender") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .shadow(
+                            elevation = 4.dp,
+                            shape = RoundedCornerShape(28.dp),
+                            spotColor = Color.Gray.copy(alpha = 0.2f)
+                        ),
+                    shape = RoundedCornerShape(28.dp),
+                    singleLine = true,
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Dropdown",
+                            tint = Color.Gray
+                        )
+                    },
+                    readOnly = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color.LightGray,
+                        focusedBorderColor = colorResource(id = R.color.blue),
+                        cursorColor = colorResource(id = R.color.blue),
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ProfileField(
+                label = "Date Of Birth",
+                placeholder = "DD - MM - YY",
+                value = dateOfBirth,
+                onValueChange = { dateOfBirth = it }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ProfileField(
+                label = "Address",
+                placeholder = "Email",
+                value = address,
+                onValueChange = { address = it }
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button(
+                onClick = onNextClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-                    .shadow(
-                        elevation = 4.dp,
-                        shape = RoundedCornerShape(28.dp),
-                        spotColor = Color.Gray.copy(alpha = 0.2f)
-                    ),
+                    .height(56.dp),
                 shape = RoundedCornerShape(28.dp),
-                singleLine = true,
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Dropdown",
-                        tint = Color.Gray
-                    )
-                },
-                readOnly = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = colorResource(id = R.color.blue),
-                    cursorColor = colorResource(id = R.color.blue),
-                    unfocusedContainerColor = Color.White,
-                    focusedContainerColor = Color.White
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorResource(id = R.color.blue)
                 )
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        ProfileField(
-            label = "Date Of Birth",
-            placeholder = "DD - MM - YY",
-            value = dateOfBirth,
-            onValueChange = { dateOfBirth = it }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        ProfileField(
-            label = "Address",
-            placeholder = "Email", // This seems to be a typo in the UI mockup
-            value = address,
-            onValueChange = { address = it }
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Next Button
-        Button(
-            onClick = onNextClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(28.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = colorResource(id = R.color.blue)
-            )
-        ) {
-            Text(
-                text = "Next",
-                fontSize = 16.sp,
-                color = Color.White
-            )
+            ) {
+                Text(
+                    text = "Next",
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+            }
         }
     }
 }
@@ -210,14 +189,14 @@ fun ProfileField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            placeholder = { Text(placeholder) },
+            placeholder = { Text(placeholder, color = Color.Gray) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
                 .shadow(
-                    elevation = 4.dp,
+                    elevation = 2.dp,
                     shape = RoundedCornerShape(28.dp),
-                    spotColor = Color.Gray.copy(alpha = 0.8f)
+                    spotColor = Color.Gray.copy(alpha = 0.5f)
                 ),
             shape = RoundedCornerShape(28.dp),
             singleLine = true,
