@@ -3,6 +3,7 @@ package com.example.doctorek.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,13 +22,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -41,6 +42,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.example.doctorek.R
 import com.example.doctorek.ui.components.DoctorekAppBar
@@ -63,6 +65,7 @@ fun ProfileScreen(navController: NavController) {
                 DoctorekAppBar(
                     title = "Profile",
                     navigationIcon = null,
+                    centerTitle = true,
                     actions = {}
                 )
             }
@@ -92,28 +95,31 @@ fun ProfileHeader() {
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
-                .border(2.dp, colorResource(id = R.color.light_blue), CircleShape)
+                .border(2.dp, colorResource(id = R.color.light_blue), CircleShape),
+            contentAlignment = Alignment.BottomEnd
         ) {
             Image(
-                painter = painterResource(id = R.drawable.profile_photo),
+                painter = painterResource(id = R.drawable.doctor_1),
                 contentDescription = "Profile Photo",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
 
-            IconButton(
-                onClick = { /* Edit profile picture */ },
+            Box(
                 modifier = Modifier
+                    .zIndex(1f)
                     .align(Alignment.BottomEnd)
-                    .size(30.dp)
+                    .offset(x = 18.dp, y = 18.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
                     .background(colorResource(id = R.color.nav_bar_active_item))
+                    .clickable { /* Edit profile picture */ }
             ) {
                 Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit Profile",
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Photo",
                     tint = Color.White,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
         }

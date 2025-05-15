@@ -17,7 +17,7 @@ import com.example.doctorek.ui.screens.HomeScreen
 import com.example.doctorek.ui.screens.MainScreen
 import com.example.doctorek.ui.screens.Onboarding
 import com.example.doctorek.ui.screens.PrescriptionsScreen
-import com.example.doctorek.ui.screens.ProfileDetailsScreen
+import com.example.doctorek.ui.screens.ProfileScreen
 import com.example.doctorek.ui.screens.SignInScreen
 import com.example.doctorek.ui.screens.SignUpScreen
 import com.example.doctorek.ui.screens.SlideShow
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
             }
             composable(Screens.Onboarding.route) { Onboarding(navController) }
             composable(Screens.ProfileDetails.route) { 
-                ProfileDetailsScreen(
+                ProfileScreen(
                     navController = navController,
 
                 ) 
@@ -79,7 +79,7 @@ sealed class Screens(val route : String){
     object Signup : Screens("signup")
     object Signin : Screens("signin")
     object Onboarding : Screens("onboarding")
-    object ProfileDetails : Screens("profile_details")
+    object ProfileDetails : Screens("profile")
     object Main : Screens("main")
     
     object FavoriteDoctors : Screens("favorite_doctors")

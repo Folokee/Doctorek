@@ -148,7 +148,7 @@ fun MainScreen(navController: NavController) {
                 Screens.Prescriptions.route -> PrescriptionsScreen(
                     navController = navController,
                 )
-                Screens.Profile.route -> ProfileDetailsScreen(
+                Screens.Profile.route -> ProfileScreen(
                     navController = navController,
                 )
             }

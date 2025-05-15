@@ -2,6 +2,7 @@ package com.example.doctorek.ui.components
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -18,21 +19,30 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun DoctorekAppBar(
     title: String,
+    centerTitle: Boolean = false,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable (RowScope.() -> Unit) = {},
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        title = { 
-            Text(
-                text = title,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+        title = {
+            if (centerTitle) {
+                Text(
+                    text = title,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                Text(
+                    text = title,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         },
         navigationIcon = { 
             if (navigationIcon != null) {
-                // Add horizontal padding to navigation icon area
                 Modifier.padding(start = 16.dp).let { paddingModifier ->
                     navigationIcon()
                 }
