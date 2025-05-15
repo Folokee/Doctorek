@@ -139,7 +139,7 @@ fun FavoriteDoctorsScreen(navController: NavController) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 DoctorekAppBar(
                     title = "Favorite Doctors",
-                    modifier = Modifier.padding(top = 24.dp),
+                    modifier = Modifier.padding(top = 30.dp),
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(
