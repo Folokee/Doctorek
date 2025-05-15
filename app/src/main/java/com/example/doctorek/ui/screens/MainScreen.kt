@@ -68,10 +68,10 @@ fun MainScreen(navController: NavController) {
 
     var selectedItem by remember { mutableStateOf(items[0]) }
 
-    val activeItemBackground = colorResource(id = R.color.light_blue)
+    val activeItemBackground = colorResource(id = R.color.light_blue).copy(alpha = 0.25f)
     val activeItemForegroundColor = colorResource(id = R.color.nav_bar_active_item)
-    val inactiveItemColor = colorResource(id = R.color.nav_bar_inactive_item)
-    val navBarContainerColor = Color.White
+    val inactiveItemColor = colorResource(id = R.color.nav_bar_active_item)
+    val navBarContainerColor = colorResource(id = R.color.white)
 
     Scaffold(
         bottomBar = {

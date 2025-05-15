@@ -1,8 +1,15 @@
 package com.example.doctorek.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,25 +21,37 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.doctorek.ui.components.DoctorekAppBar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrescriptionsScreen(navController: NavController) {
     Scaffold(
-        topBar = {
-            DoctorekAppBar(title = "My Prescriptions")
-        }
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = Color.White
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
+                .background(Color.White)
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
         ) {
-            Text(
-                text = "Prescriptions Coming Soon",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.Gray
-            )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                DoctorekAppBar(title = "My Prescriptions")
+            }
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Prescriptions Coming Soon",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Gray
+                )
+            }
         }
     }
 }

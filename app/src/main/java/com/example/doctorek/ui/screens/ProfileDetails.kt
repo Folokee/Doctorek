@@ -4,8 +4,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -20,6 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.doctorek.R
@@ -38,134 +46,140 @@ fun ProfileDetailsScreen(
     var address by remember { mutableStateOf("") }
 
     Scaffold(
-        topBar = {
-            DoctorekAppBar(
-                title = "My Profile"
-            )
-        },
-        containerColor = Color.White
+        containerColor = Color.White,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .border(2.dp, Color.LightGray, CircleShape)
-                    .clip(CircleShape)
-                    .background(Color.LightGray.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profile Picture",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(60.dp)
+            Box(modifier = Modifier.fillMaxWidth()) {
+                DoctorekAppBar(
+                    title = "My Profile"
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            ProfileField(
-                label = "Full Name",
-                placeholder = "Full Name",
-                value = fullName,
-                onValueChange = { fullName = it }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ProfileField(
-                label = "Email",
-                placeholder = "Email",
-                value = email,
-                onValueChange = { email = it }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Gender",
-                    fontSize = 14.sp,
-                    color = Color.DarkGray,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                OutlinedTextField(
-                    value = gender,
-                    onValueChange = { gender = it },
-                    placeholder = { Text("Gender") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .shadow(
-                            elevation = 4.dp,
-                            shape = RoundedCornerShape(28.dp),
-                            spotColor = Color.Gray.copy(alpha = 0.2f)
-                        ),
-                    shape = RoundedCornerShape(28.dp),
-                    singleLine = true,
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Dropdown",
-                            tint = Color.Gray
-                        )
-                    },
-                    readOnly = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = colorResource(id = R.color.blue),
-                        cursorColor = colorResource(id = R.color.blue),
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ProfileField(
-                label = "Date Of Birth",
-                placeholder = "DD - MM - YY",
-                value = dateOfBirth,
-                onValueChange = { dateOfBirth = it }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ProfileField(
-                label = "Address",
-                placeholder = "Email",
-                value = address,
-                onValueChange = { address = it }
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                onClick = onNextClick,
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorResource(id = R.color.blue)
-                )
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Next",
-                    fontSize = 16.sp,
-                    color = Color.White
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .border(2.dp, Color.LightGray, CircleShape)
+                        .clip(CircleShape)
+                        .background(Color.LightGray.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile Picture",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                ProfileField(
+                    label = "Full Name",
+                    placeholder = "Full Name",
+                    value = fullName,
+                    onValueChange = { fullName = it }
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ProfileField(
+                    label = "Email",
+                    placeholder = "Email",
+                    value = email,
+                    onValueChange = { email = it }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Gender",
+                        fontSize = 14.sp,
+                        color = Color.DarkGray,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = gender,
+                        onValueChange = { gender = it },
+                        placeholder = { Text("Gender") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .shadow(
+                                elevation = 4.dp,
+                                shape = RoundedCornerShape(28.dp),
+                                spotColor = Color.Gray.copy(alpha = 0.2f)
+                            ),
+                        shape = RoundedCornerShape(28.dp),
+                        singleLine = true,
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Dropdown",
+                                tint = Color.Gray
+                            )
+                        },
+                        readOnly = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = colorResource(id = R.color.blue),
+                            cursorColor = colorResource(id = R.color.blue),
+                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = Color.White
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ProfileField(
+                    label = "Date Of Birth",
+                    placeholder = "DD - MM - YY",
+                    value = dateOfBirth,
+                    onValueChange = { dateOfBirth = it }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ProfileField(
+                    label = "Address",
+                    placeholder = "Email",
+                    value = address,
+                    onValueChange = { address = it }
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Button(
+                    onClick = onNextClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colorResource(id = R.color.blue)
+                    )
+                ) {
+                    Text(
+                        text = "Next",
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                }
             }
         }
     }

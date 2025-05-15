@@ -8,7 +8,7 @@
     <color name="black">#000000</color>
     <color name="gray">#888888</color>
     <color name="light_gray">#EEEEEE</color>
-    <color name="nav_bar_background_old">#4485FD</color> <!-- Previous nav bar background, keeping for history if needed -->
-    <color name="nav_bar_active_item">#2972FE</color> <!-- Darker blue for active item foreground -->
-    <color name="nav_bar_inactive_item">#A0A0A0</color> <!-- A slightly darker gray for inactive items on white BG -->
+    <color name="nav_bar_background">#E4ECFF</color> 
+    <color name="nav_bar_active_item">#4485fd</color>
+    <color name="nav_bar_inactive_item">#A0A0A0</color>
 </resources>

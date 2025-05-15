@@ -15,7 +15,6 @@ import com.example.doctorek.ui.screens.AppointmentsScreen
 import com.example.doctorek.ui.screens.HomeScreen
 import com.example.doctorek.ui.screens.MainScreen
 import com.example.doctorek.ui.screens.Onboarding
-import com.example.doctorek.ui.screens.PrescriptionsScreen
 import com.example.doctorek.ui.screens.ProfileDetailsScreen
 import com.example.doctorek.ui.screens.SignInScreen
 import com.example.doctorek.ui.screens.SignUpScreen
@@ -27,10 +26,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false) // Ensure app draws behind system bars
 
-        // Set system navigation bar to transparent and icons to dark
-        window.navigationBarColor = Color.TRANSPARENT
+        window.statusBarColor = Color.WHITE
+        window.navigationBarColor = Color.WHITE
+        
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
         insetsController.isAppearanceLightNavigationBars = true // For dark icons on light background
+        insetsController.isAppearanceLightStatusBars = true // For dark status bar icons on white background
 
         setContent {
             DoctorekApp()
