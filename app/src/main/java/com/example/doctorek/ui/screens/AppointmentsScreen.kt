@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,12 +17,15 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.outlined.Event
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,14 +51,27 @@ fun AppointmentsScreen(navController: NavController) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var qrDialogAppointment by remember { mutableStateOf<Appointment?>(null) }
     var detailsDialogAppointment by remember { mutableStateOf<Appointment?>(null) }
+    val scrollState = rememberLazyListState()
+
+    // Animation state for header
+    val scrollOffset = remember { derivedStateOf { scrollState.firstVisibleItemScrollOffset } }
+    val isScrolled = scrollOffset.value > 0
 
     // Filter state
     var filterState by remember { mutableStateOf("All") }
     var filterDoctor by remember { mutableStateOf("") }
     var filterDate by remember { mutableStateOf("") }
 
+    // Search state
+    var searchText by remember { mutableStateOf("") }
+
+    // Color palette - match prescription screen
+    val blueColor = colorResource(id = R.color.blue) // Primary color for appointments
+    val greenColor = colorResource(id = R.color.bottle_green)
+    val lightBlueColor = colorResource(id = R.color.light_blue)
+
     Scaffold(
-        containerColor = colorResource(id = R.color.white),
+        containerColor = Color.White,
         topBar = {
             Column {
                 DoctorekAppBar(
@@ -64,7 +81,7 @@ fun AppointmentsScreen(navController: NavController) {
                             Icon(
                                 Icons.Default.FilterList,
                                 contentDescription = "Filter",
-                                tint = colorResource(id = R.color.nav_bar_active_item)
+                                tint = blueColor
                             )
                         }
                     }
@@ -73,12 +90,120 @@ fun AppointmentsScreen(navController: NavController) {
             }
         }
     ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(paddingValues)
+        ) {
+            // Header banner matching prescription screen style
+            if (!isScrolled) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .padding(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        blueColor,
+                                        blueColor.copy(alpha = 0.8f)
+                                    )
+                                )
+                            )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp)
+                            ) {
+                                Text(
+                                    "Manage Your Appointments",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    "Schedule and track your upcoming visits",
+                                    fontSize = 14.sp,
+                                    color = Color.White.copy(alpha = 0.9f),
+                                    maxLines = 2
+                                )
+                            }
+
+                            // Calendar icon
+                            Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Event,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(36.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Search bar matching prescription screen
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .height(56.dp),
+                placeholder = { Text("Search appointments") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = blueColor
+                    )
+                },
+                trailingIcon = {
+                    if (searchText.isNotEmpty()) {
+                        IconButton(onClick = { searchText = "" }) {
+                            Icon(
+                                Icons.Default.Clear,
+                                contentDescription = "Clear",
+                                tint = Color.Gray
+                            )
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = blueColor,
+                    unfocusedBorderColor = Color(0xFFE0E0E0)
+                )
+            )
+
             // Categories Row
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = horizontalPadding, vertical = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(categories) { category ->
@@ -87,11 +212,11 @@ fun AppointmentsScreen(navController: NavController) {
                         shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (selectedCategory == category)
-                                colorResource(id = R.color.blue)
+                                blueColor
                             else
-                                colorResource(id = R.color.white),
+                                Color.White,
                             contentColor = if (selectedCategory == category)
-                                colorResource(id = R.color.white)
+                                Color.White
                             else
                                 colorResource(id = R.color.gray)
                         ),
@@ -103,19 +228,25 @@ fun AppointmentsScreen(navController: NavController) {
             }
 
             // Appointments List
+            val filteredAppointments = appointments.filter { appt ->
+                (selectedCategory == "All" || appt.category == selectedCategory) &&
+                (filterState == "All" || appt.state == filterState) &&
+                (filterDoctor.isBlank() || appt.doctorName.contains(filterDoctor, ignoreCase = true)) &&
+                (filterDate.isBlank() || appt.date.contains(filterDate)) &&
+                (searchText.isBlank() ||
+                    appt.doctorName.contains(searchText, ignoreCase = true) ||
+                    appt.specialty.contains(searchText, ignoreCase = true) ||
+                    appt.category.contains(searchText, ignoreCase = true))
+            }
+
             LazyColumn(
+                state = scrollState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = horizontalPadding),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
             ) {
-                var filteredAppointments = if (selectedCategory == "All") appointments else appointments.filter { it.category == selectedCategory }
-                // Apply filter dialog filters
-                filteredAppointments = filteredAppointments.filter { appt ->
-                    (filterState == "All" || appt.state == filterState) &&
-                    (filterDoctor.isBlank() || appt.doctorName.contains(filterDoctor, ignoreCase = true)) &&
-                    (filterDate.isBlank() || appt.date.contains(filterDate))
-                }
                 items(filteredAppointments) { appointment ->
                     AppointmentCard(
                         appointment = appointment,
@@ -123,11 +254,56 @@ fun AppointmentsScreen(navController: NavController) {
                         onCardClick = { detailsDialogAppointment = appointment }
                     )
                 }
+
+                // Empty state matching prescription screen
+                if (filteredAppointments.isEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .background(blueColor.copy(alpha = 0.1f), shape = RoundedCornerShape(16.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Event,
+                                    contentDescription = "No appointments",
+                                    tint = blueColor,
+                                    modifier = Modifier.size(80.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "No appointments found",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF2E3A59)
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "Schedule a new appointment or try different search terms",
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 32.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 
-    // Filter Bottom Sheet
+    // Filter Bottom Sheet - keep existing implementation
     if (showFilterSheet) {
         ModalBottomSheet(
             onDismissRequest = { showFilterSheet = false },
@@ -239,7 +415,7 @@ fun AppointmentsScreen(navController: NavController) {
         }
     }
 
-    // QR Code Dialog
+    // QR Code Dialog - enhance with blue accent
     if (qrDialogAppointment != null) {
         Dialog(
             onDismissRequest = { qrDialogAppointment = null },
@@ -247,7 +423,7 @@ fun AppointmentsScreen(navController: NavController) {
         ) {
             Card(
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.white)),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 modifier = Modifier.padding(24.dp)
             ) {
                 Column(
@@ -256,18 +432,17 @@ fun AppointmentsScreen(navController: NavController) {
                         .widthIn(min = 260.dp, max = 320.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Placeholder for QR code
+                    // QR code with enhanced styling
                     Box(
                         modifier = Modifier
                             .size(180.dp)
-                            .background(colorResource(id = R.color.light_gray), shape = RoundedCornerShape(16.dp)),
+                            .background(blueColor.copy(alpha = 0.1f), shape = RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Replace with your QR code composable if available
                         Icon(
                             imageVector = Icons.Default.QrCode,
                             contentDescription = "QR Code",
-                            tint = colorResource(id = R.color.blue),
+                            tint = blueColor,
                             modifier = Modifier.size(120.dp)
                         )
                     }
@@ -283,7 +458,7 @@ fun AppointmentsScreen(navController: NavController) {
                         onClick = { qrDialogAppointment = null },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.blue))
+                        colors = ButtonDefaults.buttonColors(containerColor = blueColor)
                     ) {
                         Text("Close", color = colorResource(id = R.color.white))
                     }
@@ -292,7 +467,7 @@ fun AppointmentsScreen(navController: NavController) {
         }
     }
 
-    // Appointment Details Dialog
+    // Appointment Details Dialog - enhance with blue accent
     if (detailsDialogAppointment != null) {
         Dialog(
             onDismissRequest = { detailsDialogAppointment = null },
@@ -300,7 +475,7 @@ fun AppointmentsScreen(navController: NavController) {
         ) {
             Card(
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.white)),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 modifier = Modifier.padding(24.dp)
             ) {
                 Column(
@@ -327,7 +502,7 @@ fun AppointmentsScreen(navController: NavController) {
                         onClick = { detailsDialogAppointment = null },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.blue))
+                        colors = ButtonDefaults.buttonColors(containerColor = blueColor)
                     ) {
                         Text("Close", color = colorResource(id = R.color.white))
                     }
@@ -338,7 +513,7 @@ fun AppointmentsScreen(navController: NavController) {
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
+fun InfoRow(label: String, value: String) {
     Column(modifier = Modifier.padding(bottom = 8.dp)) {
         Text(
             label,
@@ -415,7 +590,7 @@ fun AppointmentCard(
                 },
                 modifier = Modifier
                     .size(36.dp)
-                    .background(colorResource(id = R.color.light_blue), shape = CircleShape)
+                    .background(colorResource(id = R.color.light_blue), shape = CircleShape),
             ) {
                 Icon(Icons.Default.QrCode, "QR Code", tint = colorResource(id = R.color.black))
             }
