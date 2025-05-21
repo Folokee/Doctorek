@@ -295,6 +295,7 @@ fun HomeScreen(
                         topDoctors.forEach { doctor -> 
                             DoctorCard(doctor = doctor) {
                                 // Handle doctor item click
+                                navController.navigate("doctorDetail/${doctor.id}")
                             }
                         }
                     }

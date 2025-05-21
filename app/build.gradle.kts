@@ -43,6 +43,14 @@ android {
 }
 
 dependencies {
+    // added implementation : lahcen/ScreenV2
+    implementation("androidx.compose.material:material:1.6.0")
+    implementation("androidx.compose.ui:ui-text:1.6.0") // this one handles fonts
+    // Image loading (for doctor photos)
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    // Coroutines for async operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

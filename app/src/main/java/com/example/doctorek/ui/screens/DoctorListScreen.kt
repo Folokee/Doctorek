@@ -228,6 +228,7 @@ fun DoctorListScreen(
                     items(filteredDoctors, key = { it.id }) { doctor ->
                         DoctorListItem(doctor = doctor, onClick = {
                             // navController.navigate(Screens.DoctorDetails.createRoute(doctor.id)) // TODO: Add DoctorDetails screen
+                            navController.navigate("doctorDetail/${doctor.id}")
                         })
                     }
                 }

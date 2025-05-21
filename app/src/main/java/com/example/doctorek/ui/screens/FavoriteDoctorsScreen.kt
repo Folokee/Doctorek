@@ -224,7 +224,7 @@ fun FavoriteDoctorsScreen(navController: NavController) {
                     items(filteredDoctors) { doctor ->
                         FavoriteDoctorItem(
                             doctor = doctor,
-                            onClick = { },
+                            onClick = { navController.navigate("doctorDetail/${doctor.id}") },
                             onFavoriteClick = {
                                 selectedDoctor = doctor
                                 showRemoveDialog = true
