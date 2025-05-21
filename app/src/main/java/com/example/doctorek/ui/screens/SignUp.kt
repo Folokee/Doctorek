@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.doctorek.AuthActivity
@@ -94,6 +95,16 @@ fun SignUpScreen(
             fontWeight = FontWeight.Bold,
             color = Color.Black
         )
+
+        if(userState.errorMessage != null){
+            Text(
+                text = userState.errorMessage,
+                color = Color.Red,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(40.dp))
 

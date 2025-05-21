@@ -7,17 +7,9 @@ import androidx.lifecycle.AndroidViewModel
 
 import androidx.lifecycle.viewModelScope
 import com.example.doctorek.data.auth.SharedPrefs
-import com.example.doctorek.data.auth.SupabaseClient.client
 import com.example.doctorek.data.repositories.AuthRepository
 
 import kotlinx.coroutines.launch
-
-
-import io.github.jan.supabase.gotrue.gotrue
-import io.github.jan.supabase.gotrue.providers.builtin.Email
-import io.ktor.utils.io.concurrent.shared
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 
 data class UserState(
     val Loading: Boolean = false,
@@ -43,7 +35,13 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                     Loading = true
                 )
 
-                repository.signUp(userEmail, userPassword, role)
+                val resp = repository.signUp(userEmail, userPassword, role)
+                if (resp.isFailure){
+                    _userState.value = UserState(
+                        errorMessage = resp.exceptionOrNull()?.message ?: "Signup Failed"
+                    )
+                    return@launch
+                }
                 _userState.value = UserState(
                     Loading = false
                 )
@@ -68,7 +66,13 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                 _userState.value = UserState(
                     Loading = true
                 )
-                repository.signIn(userEmail, userPassword)
+                val resp = repository.signIn(userEmail, userPassword)
+                if (resp.isFailure){
+                    _userState.value = UserState(
+                        errorMessage = resp.exceptionOrNull()?.message ?: "Signup Failed"
+                    )
+                    return@launch
+                }
                 _userState.value = UserState(
                     Loading = false
                 )
@@ -89,12 +93,16 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                 _userState.value = UserState(
                     Loading = true
                 )
-                repository.logout()
+                val resp = repository.logout()
+                if (resp.isFailure){
+                    _userState.value = UserState(
+                        errorMessage = resp.exceptionOrNull()?.message ?: "Signup Failed"
+                    )
+                    return@launch
+                }
                 sharedPref.clearAll()
                 _userState.value = UserState(
-                    Loading = false
-                )
-                _userState.value = UserState(
+                    Loading = false,
                     isSignedIn = false
                 )
             } catch (e: Exception) {

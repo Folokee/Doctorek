@@ -119,13 +119,13 @@ fun ProfileDetailsScreen(
             ProfileField(
                 label = "Full Name",
                 placeholder = "Full Name",
-                value = fullName,
+                value = fullName?: "",
                 onValueChange = { fullName = it }
             )
             ProfileField(
                 label = "Email",
                 placeholder = "Email",
-                value = email,
+                value = email?: "",
                 onValueChange = { email = it }
             )
 
@@ -188,14 +188,14 @@ fun ProfileDetailsScreen(
             ProfileField(
                 label = "Address",
                 placeholder = "Address",
-                value = address,
+                value = address?: "",
                 onValueChange = { address = it }
             )
 
             ProfileField(
                 label = "Phone Number",
                 placeholder = "Phone Number",
-                value = phone,
+                value = phone?: "",
                 onValueChange = { phone = it }
             )
 
@@ -206,10 +206,10 @@ fun ProfileDetailsScreen(
             Button(
                 onClick = {
                     viewModel.updateProfile(
-                        email = email,
-                        phone_number = phone,
-                        full_name = fullName,
-                        address = address,
+                        email = email!!,
+                        phone_number = phone!!,
+                        full_name = fullName!!,
+                        address = address!!,
                         avatar_url = ""
                     )
                 },

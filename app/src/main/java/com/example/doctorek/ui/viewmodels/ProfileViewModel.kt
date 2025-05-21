@@ -49,11 +49,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                         loading = false,
                         profile = response.getOrNull()?.let {
                             ProfileModel(
-                                email = it.email,
-                                phone_number = it.phone_number ?: "",
-                                full_name = it.full_name ?: "",
-                                address = it.address ?: "",
-                                avatar_url = it.avatar_url?: ""
+                                email = it.data.email,
+                                phone_number = it.data.phone_number,
+                                full_name = it.data.full_name,
+                                address = it.data.address,
+                                avatar_url = it.data.avatar_url
                             )
                         } ?: ProfileModel(),
                     )

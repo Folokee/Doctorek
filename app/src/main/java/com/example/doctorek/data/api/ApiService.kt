@@ -20,7 +20,7 @@ import retrofit2.http.Query
 
 
 interface ApiService {
-    @PATCH("api/profile/")
+    @PATCH("/api/profile/")
     suspend fun updateProfile(
         @Body
         profile: ProfileModel,
@@ -28,15 +28,11 @@ interface ApiService {
         token : String,
     ): Response<ResponseModel>
 
-    @GET("api/profile/")
+    @GET("/api/profile/")
     suspend fun getProfile(
         @Header("Authorization")
         token : String,
-        @Header("apiKey")
-        apiKey : String,
-        @Query("id")
-        id : String
-    ): Response<List<ProfileResponse>>
+    ): Response<ProfileResponse>
 
     @GET("/rest/v1/doctor_profiles?select=id,specialty,hospital_name,average_rating,profiles:user_id(full_name,avatar_url)&order=average_rating.desc")
     suspend fun getDoctors(
@@ -53,19 +49,19 @@ interface ApiService {
         @Query(value = "doctor_availability.is_available", encoded = true) filter: String = "eq.true"
     ): Response<List<DoctorDetailResponse>>
 
-    @POST("/api/signup")
+    @POST("/api/signup/")
     suspend fun signUp(
         @Body
         request : SignupRequest
     ) : Response<SignupResponse>
 
-    @POST("/api/signin")
+    @POST("/api/signin/")
     suspend fun signIn(
         @Body
         request : SigninRequest
     ) : Response<SigninResponse>
 
-    @POST("/api/signout")
+    @POST("/api/signout/")
     suspend fun logout(
         @Header("Authorization")
         token : String,

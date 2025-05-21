@@ -18,10 +18,10 @@ class ProfileRepository(private val context : Context) {
         val userId = "eq.${sharedPrefs.getString("user_id")}"
 
         return try {
-            val response = apiService.getProfile("Bearer $token", apiKey, userId)
+            val response = apiService.getProfile("Bearer $token")
             Log.d("ProfileRepository", "Response: ${response.body()}")
-            if(response.isSuccessful && response.body() != null && response.body()!!.isNotEmpty()){
-                Result.success(response.body()!!.first())
+            if(response.isSuccessful && response.body() != null && response.body() != null){
+                Result.success(response.body()!!)
             } else {
                 val errorResponse = response.errorBody()?.string() ?: "No profile found"
                 Result.failure(Exception(errorResponse))
@@ -48,14 +48,10 @@ class ProfileRepository(private val context : Context) {
             address,
             avatar_url
         )
-        val userId = "eq.${sharedPrefs.getString("user_id")}"
-
         return try {
             val response = apiService.updateProfile(
                 updatedProfile,
-                "Bearer $token",
-                apiKey,
-                userId
+                "Bearer $token"
             )
             if(response.isSuccessful){
                 Result.success("Okay")

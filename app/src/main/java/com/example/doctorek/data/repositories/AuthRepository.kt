@@ -1,6 +1,7 @@
 package com.example.doctorek.data.repositories
 
 import android.content.Context
+import android.util.Log
 import com.example.doctorek.data.api.ApiClient
 import com.example.doctorek.data.auth.SharedPrefs
 import com.example.doctorek.data.models.SigninRequest
@@ -26,15 +27,15 @@ class AuthRepository(private val context : Context) {
                 password = password
             )
             val response = apiService.signIn(request)
-            if(response.isSuccessful && response.body() != null){
+            if(response.isSuccessful && response.body()!!.success){
                 val body = response.body()!!
                 //Necessary saves in shared preferences
-                sharedPrefs.saveAccess(body.accessToken)
-                sharedPrefs.saveUserId(body.userId)
+                sharedPrefs.saveAccess(body.data.access_token)
+                sharedPrefs.saveUserId(body.data.userId)
                 sharedPrefs.save("user_email", email)
                 Result.success(body)
             } else {
-                val errorResponse = response.errorBody()?.string() ?: "Login failed"
+                val errorResponse = response.body()!!.message
                 Result.failure(Exception(errorResponse))
             }
         } catch (e : Exception){
@@ -52,16 +53,17 @@ class AuthRepository(private val context : Context) {
                 user_type = role
             )
             val response = apiService.signUp(request)
-            if(response.isSuccessful && response.body() != null){
+            if(response.isSuccessful && response.body()!!.success){
                 val body = response.body()!!
                 //Necessary saves in shared preferences
-                sharedPrefs.saveAccess(body.accessToken)
-                sharedPrefs.saveUserId(body.userId)
+                sharedPrefs.saveAccess(body.data.access_token)
+                sharedPrefs.saveUserId(body.data.userId)
                 sharedPrefs.save("user_email", email)
                 Result.success(body)
             } else {
-                val errorResponse = response.errorBody()?.string() ?: "Signup failed"
+                val errorResponse = response.body()!!.message
                 Result.failure(Exception(errorResponse))
+
             }
         }catch (e : Exception){
             Result.failure(Exception(e.message))

@@ -6,14 +6,20 @@ data class SigninRequest(
 )
 
 data class SigninResponse(
-    val accessToken: String,
-    val refreshToken: String,
+    val success : Boolean,
+    val message: String,
+    val data: userData
+)
+
+data class userData(
+    val access_token: String,
+    val refresh_token: String,
     val userId: String
 )
 data class SignupResponse(
-    val accessToken: String,
-    val refreshToken: String,
-    val userId: String
+    val success : Boolean,
+    val message: String,
+    val data: userData
 )
 
 data class SignupRequest(

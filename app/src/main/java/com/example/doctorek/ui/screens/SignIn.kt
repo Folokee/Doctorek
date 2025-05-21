@@ -89,6 +89,15 @@ fun SignInScreen(
             fontWeight = FontWeight.Bold,
             color = Color.Black
         )
+        if(userState.errorMessage != null){
+            Text(
+                text = userState.errorMessage,
+                color = Color.Red,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(40.dp))
 
