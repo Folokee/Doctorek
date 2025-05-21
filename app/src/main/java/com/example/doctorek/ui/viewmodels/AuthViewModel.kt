@@ -12,8 +12,9 @@ import com.example.doctorek.data.auth.SupabaseClient.client
 import kotlinx.coroutines.launch
 
 
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.gotrue.gotrue
+import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.ktor.utils.io.concurrent.shared
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -40,14 +41,25 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                     Loading = true
                 )
 
-                client.auth.signUpWith(Email){
-                    email = userEmail
-                    password = userPassword
-                    data = JsonObject(mapOf(
-                        "user_type" to JsonPrimitive(role)
-                    ))
+                if (role == "patient") {
+                    client.gotrue.signUpWith(Email){
+                        email = userEmail
+                        password = userPassword
+                    }
+                } else {
+                    client.gotrue.signUpWith(Email) {
+                        email = userEmail
+                        password = userPassword
+                        data = JsonObject(
+                            mapOf(
+                                "user_type" to JsonPrimitive(role)
+                            )
+                        )
+                    }
                 }
                 saveToken()
+                sharedPref.save("user_email", userEmail)
+                saveId()
                 _userState.value = UserState(
                     Loading = false
                 )
@@ -64,9 +76,17 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
 
     private fun saveToken() {
         viewModelScope.launch {
-            val session = client.auth.currentSessionOrNull()
+            val session = client.gotrue.currentSessionOrNull()
             val accessToken = session?.accessToken
             sharedPref.saveAccess(accessToken ?: "null")
+        }
+    }
+
+    private fun saveId(){
+        viewModelScope.launch {
+            val session = client.gotrue.currentSessionOrNull()
+            val userId = session?.user?.id
+            sharedPref.save("user_id", userId ?: "null")
         }
     }
 
@@ -84,11 +104,13 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                 _userState.value = UserState(
                     Loading = true
                 )
-                client.auth.signInWith(Email) {
+                client.gotrue.loginWith(Email) {
                     email = userEmail
                     password = userPassword
                 }
                 saveToken()
+                sharedPref.save("user_email", userEmail)
+                saveId()
                 _userState.value = UserState(
                     Loading = false
                 )
@@ -109,7 +131,7 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                 _userState.value = UserState(
                     Loading = true
                 )
-                client.auth.signOut()
+                client.gotrue.logout()
                 sharedPref.clearAll()
                 _userState.value = UserState(
                     Loading = false

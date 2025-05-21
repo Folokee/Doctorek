@@ -14,20 +14,26 @@ class SharedPrefs(private val context: Context){
         return sharedPreferences.getString("access_token", null)
     }
 
-    fun saveRefresh(value: String) {
-        sharedPreferences.edit() { putString("refresh_token", value) }
-    }
-
-    fun getRefresh(): String? {
-        return sharedPreferences.getString("refresh_token", null)
-    }
-
     fun setFirstTime(value: Boolean) {
         sharedPreferences.edit() { putBoolean("onboarding", value) }
     }
 
     fun getFirstTime(): Boolean {
         return sharedPreferences.getBoolean("onboarding", true)
+    }
+
+    fun save(key : String, value : String){
+        sharedPreferences.edit() { putString(key, value) }
+    }
+
+    fun save(key : String, value : Int){
+        sharedPreferences.edit() { putInt(key, value) }
+    }
+    fun getString(key : String) : String? {
+        return sharedPreferences.getString(key, null)
+    }
+    fun getInt(key : String) : Int? {
+        return sharedPreferences.getInt(key, -1)
     }
 
     fun clearAll() {

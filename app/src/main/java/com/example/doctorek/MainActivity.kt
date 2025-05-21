@@ -5,7 +5,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,10 +33,12 @@ class MainActivity : ComponentActivity() {
 
         window.statusBarColor = Color.WHITE
         window.navigationBarColor = Color.WHITE
-        
+
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-        insetsController.isAppearanceLightNavigationBars = true // For dark icons on light background
-        insetsController.isAppearanceLightStatusBars = true // For dark status bar icons on white background
+        insetsController.isAppearanceLightNavigationBars =
+            true // For dark icons on light background
+        insetsController.isAppearanceLightStatusBars =
+            true // For dark status bar icons on white background
 
         setContent {
             DoctorekApp()
@@ -43,47 +48,35 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun DoctorekApp() {
         val navController = rememberNavController()
-        val sharedPrefs = SharedPrefs(applicationContext)
-        val isFirstTime = sharedPrefs.getFirstTime()
         NavHost(
             navController = navController,
-            startDestination = if(isFirstTime) Screens.Slideshow.route else Screens.Onboarding.route
-        ){
-            composable(Screens.Slideshow.route){ SlideShow(navController) }
-            composable(Screens.Signup.route){ SignUpScreen(navController) }
-            composable(Screens.Signin.route) { 
-                SignInScreen(
-                    navController = navController,
-                    onSignInSuccess = { navController.navigate(Screens.Main.route) }
-                ) 
-            }
-            composable(Screens.Onboarding.route) { Onboarding(navController) }
-            composable(Screens.ProfileDetails.route) { 
+            startDestination = Screens.Main.route
+        ) {
+            composable(Screens.ProfileDetails.route) {
                 ProfileScreen(
                     navController = navController,
-
-                ) 
+                )
             }
-            composable(Screens.Main.route) { 
-                MainScreen(navController) 
+            composable(Screens.Main.route) {
+                MainScreen(navController)
             }
             composable(Screens.FavoriteDoctors.route) {
                 FavoriteDoctorsScreen(navController)
             }
+
         }
     }
+
+
 }
 
-sealed class Screens(val route : String){
-    object Slideshow : Screens("slideshow")
-    object Signup : Screens("signup")
-    object Signin : Screens("signin")
-    object Onboarding : Screens("onboarding")
+sealed class Screens(val route: String) {
+
     object ProfileDetails : Screens("profile")
     object Main : Screens("main")
-    
+
     object FavoriteDoctors : Screens("favorite_doctors")
-    
+
     // Nested screens for bottom navigation
     object Home : Screens("home")
     object Appointments : Screens("appointments")

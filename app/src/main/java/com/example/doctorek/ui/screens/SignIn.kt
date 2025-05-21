@@ -1,5 +1,6 @@
 package com.example.doctorek.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,21 +25,37 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.doctorek.AuthActivity
+import com.example.doctorek.AuthScreens
+import com.example.doctorek.MainActivity
 import com.example.doctorek.R
 import com.example.doctorek.Screens
+import com.example.doctorek.ui.viewmodels.AuthViewModel
 
 @Composable
 fun SignInScreen(
     navController: NavController,
-    onSignInSuccess: () -> Unit = {},
     onFacebookClick: () -> Unit = {},
     onGoogleClick: () -> Unit = {},
+    viewModel : AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    val userState = viewModel.userState.value
+    val context = LocalContext.current
+
+    LaunchedEffect(userState.isSignedIn) {
+        if (userState.isSignedIn) {
+            val intent = Intent(context, MainActivity::class.java)
+            context.startActivity(intent)
+            (context as AuthActivity).finish()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -145,7 +162,7 @@ fun SignInScreen(
 
         Button(
             onClick = {
-                onSignInSuccess()
+                viewModel.login(email,password)
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -155,11 +172,19 @@ fun SignInScreen(
                 containerColor = colorResource(id = R.color.blue)
             )
         ) {
-            Text(
-                text = "Sign In",
-                fontSize = 16.sp,
-                color = Color.White
-            )
+            if (userState.Loading){
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }else {
+                Text(
+                    text = "Sign In",
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+            }
+
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -249,7 +274,7 @@ fun SignInScreen(
             )
             TextButton(
                 onClick = {
-                    navController.navigate(Screens.Signup.route)
+                    navController.navigate(AuthScreens.Signup.route)
                 },
                 contentPadding = PaddingValues(0.dp)
             ) {

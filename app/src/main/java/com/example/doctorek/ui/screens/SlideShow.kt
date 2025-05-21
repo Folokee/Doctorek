@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.doctorek.AuthScreens
 import com.example.doctorek.R
 import com.example.doctorek.Screens
 import com.example.doctorek.data.auth.SharedPrefs
@@ -174,7 +175,7 @@ fun SlideShow(navController: NavController) {
                 verticalArrangement = Arrangement.Bottom
             ) {
                 OutlinedButton(
-                    onClick = { navController.navigate(Screens.Onboarding.route) },
+                    onClick = { navController.navigate(AuthScreens.Onboarding.route) },
                     modifier = Modifier.fillMaxWidth(),
                     border = BorderStroke(1.dp, color = colorResource(id = R.color.blue)),
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -188,7 +189,7 @@ fun SlideShow(navController: NavController) {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
-                    onClick = { navController.navigate(Screens.Signup.route) },
+                    onClick = { navController.navigate(AuthScreens.Signup.route) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorResource(id = R.color.blue),

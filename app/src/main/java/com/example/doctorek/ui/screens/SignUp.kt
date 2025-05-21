@@ -1,5 +1,7 @@
 package com.example.doctorek.ui.screens
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,20 +25,42 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.doctorek.AuthActivity
+import com.example.doctorek.AuthScreens
+import com.example.doctorek.MainActivity
 import com.example.doctorek.R
 import com.example.doctorek.Screens
+import com.example.doctorek.ui.components.LoadingSplash
+import com.example.doctorek.ui.viewmodels.AuthViewModel
 
 @Composable
 fun SignUpScreen(
     navController: NavController,
     onFacebookClick: () -> Unit = {},
     onGoogleClick: () -> Unit = {},
+    viewModel : AuthViewModel = viewModel(),
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    val userState = viewModel.userState.value
+    val context = LocalContext.current
+
+    LaunchedEffect(userState.isSignedIn) {
+        if (userState.isSignedIn){
+            navController.navigate(AuthScreens.ProfileDetails.route)
+            Toast.makeText(context,"Account created successfully, you can now login", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    if (userState.Loading) {
+        LoadingSplash()
+        return
+    }
 
     Column(
         modifier = Modifier
@@ -143,6 +167,7 @@ fun SignUpScreen(
 
         Button(
             onClick = {
+                viewModel.signUp(email, password, "patient")
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -246,7 +271,7 @@ fun SignUpScreen(
             )
             TextButton(
                 onClick = {
-                    navController.navigate(Screens.Signin.route)
+                    navController.navigate(AuthScreens.Signin.route)
                 },
                 contentPadding = PaddingValues(0.dp)
             ) {

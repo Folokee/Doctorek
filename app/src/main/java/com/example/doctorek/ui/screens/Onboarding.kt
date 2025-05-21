@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.doctorek.AuthScreens
 import com.example.doctorek.R
 import com.example.doctorek.Screens
 
@@ -59,7 +60,7 @@ fun Onboarding(navController: NavController){
         ) {
 
             Button(
-                onClick = { navController.navigate(Screens.Signup.route) },
+                onClick = { navController.navigate(AuthScreens.Signup.route) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorResource(id = R.color.blue),
@@ -72,7 +73,7 @@ fun Onboarding(navController: NavController){
             Spacer(modifier = Modifier.height(20.dp))
 
             OutlinedButton(
-                onClick = { navController.navigate(Screens.Signin.route) },
+                onClick = { navController.navigate(AuthScreens.Signin.route) },
                 modifier = Modifier.fillMaxWidth(),
                 border = BorderStroke(1.dp, color = colorResource(id = R.color.blue)),
                 colors = ButtonDefaults.outlinedButtonColors(
