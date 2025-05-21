@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "813442254588",
+    "project_id": "doctorek-c491b",
+    "storage_bucket": "doctorek-c491b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:813442254588:android:a67b17ce9925e972cbb979",
+        "android_client_info": {
+          "package_name": "com.example.doctorek"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhPK0Lk3hZyNYKi77itBTvIJD5DEWPO2M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
