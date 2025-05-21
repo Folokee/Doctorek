@@ -2,13 +2,14 @@ package com.example.doctorek.ui.viewmodels
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.doctorek.data.models.DoctorDetailResponse
 import com.example.doctorek.data.models.DoctorResponse
 import com.example.doctorek.data.repositories.DoctorRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -24,9 +25,8 @@ data class DoctorDetailState(
     val error: String? = null
 )
 
-class DoctorViewModel (application: Application) : AndroidViewModel(application) {
+class DoctorViewModel(application: Application) : AndroidViewModel(application) {
     private val doctorRepository = DoctorRepository(application.applicationContext)
-
 
     // Doctor list state
     private val _doctorListState = MutableStateFlow(DoctorListState())
@@ -35,6 +35,11 @@ class DoctorViewModel (application: Application) : AndroidViewModel(application)
     // Doctor detail state
     private val _doctorDetailState = MutableStateFlow(DoctorDetailState())
     val doctorDetailState: StateFlow<DoctorDetailState> = _doctorDetailState
+
+    // Unique specialties for filtering
+    val uniqueSpecialties: StateFlow<List<String>> = doctorListState.map { state ->
+        state.doctors.map { it.specialty }.distinct().sorted()
+    }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Lazily, emptyList())
 
     init {
         fetchDoctors()

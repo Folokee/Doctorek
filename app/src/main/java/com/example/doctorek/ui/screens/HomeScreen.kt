@@ -54,14 +54,22 @@ import androidx.navigation.NavController
 import com.example.doctorek.R
 import com.example.doctorek.Screens
 import com.example.doctorek.ui.components.DoctorekAppBar
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
+import com.example.doctorek.data.models.DoctorResponse
+import com.example.doctorek.ui.viewmodels.DoctorViewModel
+import coil.compose.AsyncImage
 
-// Define a consistent horizontal padding
 val horizontalPadding = 16.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    doctorViewModel: DoctorViewModel = viewModel()
+) {
     var searchQuery by remember { mutableStateOf("") }
+    val doctorListState by doctorViewModel.doctorListState.collectAsState()
 
     Scaffold(
         containerColor = Color.White,
@@ -168,7 +176,9 @@ fun HomeScreen(navController: NavController) {
                             color = colorResource(id = R.color.nav_bar_active_item),
                             fontWeight = FontWeight.SemiBold
                         ),
-                        modifier = Modifier.clickable { }
+                        modifier = Modifier.clickable {
+                            navController.navigate(Screens.DoctorList.route)
+                        }
                     )
                 }
 
@@ -180,7 +190,9 @@ fun HomeScreen(navController: NavController) {
                     maxItemsInEachRow = 4
                 ) {
                     getDoctorCategories().forEach { category ->
-                        DoctorCategoryItem(category = category) { }
+                        DoctorCategoryItem(category = category) {
+                            navController.navigate(Screens.DoctorList.route + "?category=${category.name}")
+                        }
                     }
                 }
 
@@ -204,7 +216,9 @@ fun HomeScreen(navController: NavController) {
                             color = colorResource(id = R.color.nav_bar_active_item),
                             fontWeight = FontWeight.SemiBold
                         ),
-                        modifier = Modifier.clickable { }
+                        modifier = Modifier.clickable {
+                            navController.navigate(Screens.DoctorList.route)
+                        }
                     )
                 }
 
@@ -216,8 +230,18 @@ fun HomeScreen(navController: NavController) {
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    getTopDoctors().forEach { doctor ->
-                        DoctorCard(doctor = doctor) { }
+                    if (doctorListState.loading) {
+                        Text("Loading doctors...")
+                    } else if (doctorListState.error != null) {
+                        Text("Error: ${doctorListState.error}")
+                    } else {
+                        val topDoctors = doctorListState.doctors
+                            .sortedByDescending { it.average_rating }
+                        topDoctors.forEach { doctor ->
+                            DoctorCard(doctor = doctor) {
+                                // Handle doctor item click
+                            }
+                        }
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                 }
@@ -321,7 +345,7 @@ fun DoctorCategoryItem(
 
 @Composable
 fun DoctorCard(
-    doctor: Doctor,
+    doctor: DoctorResponse,
     onClick: () -> Unit
 ) {
     Card(
@@ -332,7 +356,7 @@ fun DoctorCard(
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp) // Added elevation
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column {
             Box(
@@ -341,20 +365,23 @@ fun DoctorCard(
                     .height(120.dp)
                     .background(Color.White)
             ) {
-                Image(
-                    painter = painterResource(id = doctor.imageResId),
-                    contentDescription = null,
+                AsyncImage(
+                    model = doctor.profiles.avatar_url,
+                    contentDescription = doctor.profiles.full_name ?: "Doctor Avatar",
+                    modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    placeholder = painterResource(id = R.drawable.ic_profile_placeholder),
+                    error = painterResource(id = R.drawable.ic_profile_placeholder)
                 )
             }
 
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text = doctor.name,
+                    text = "Dr. ${doctor.profiles.full_name ?: "N/A"}",
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.Bold
-                    )
+                    ),
+                    maxLines = 1
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -363,25 +390,23 @@ fun DoctorCard(
                     text = doctor.specialty,
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    ),
+                    maxLines = 1
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "${doctor.rating}",
-                        style = MaterialTheme.typography.bodySmall
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_star),
+                        contentDescription = "Rating",
+                        tint = Color(0xFFFFD700),
+                        modifier = Modifier.size(14.dp)
                     )
-
                     Spacer(modifier = Modifier.width(4.dp))
-
                     Text(
-                        text = "(${doctor.reviewCount} reviews)",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 10.sp
-                        )
+                        text = String.format("%.1f", doctor.average_rating),
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -396,15 +421,6 @@ data class DoctorCategory(
     val backgroundColor: Color
 )
 
-data class Doctor(
-    val id: Int,
-    val name: String,
-    val specialty: String,
-    val rating: Double,
-    val reviewCount: Int,
-    val imageResId: Int
-)
-
 fun getDoctorCategories(): List<DoctorCategory> {
     return listOf(
         DoctorCategory(1, "Consultation", R.drawable.ic_consultation, Color(0xFF4285F4)),
@@ -415,12 +431,5 @@ fun getDoctorCategories(): List<DoctorCategory> {
         DoctorCategory(6, "Physician", R.drawable.ic_physician, Color(0xFF4BCAFF)),
         DoctorCategory(7, "Skin", R.drawable.ic_skin, Color(0xFFFF4BCA)),
         DoctorCategory(8, "Surgeon", R.drawable.ic_surgeon, Color(0xFFFF6D4B))
-    )
-}
-
-fun getTopDoctors(): List<Doctor> {
-    return listOf(
-        Doctor(1, "Dr. Bellamy N", "Therapist", 4.8, 120, R.drawable.doctor_1),
-        Doctor(2, "Dr. Mensah T", "Physiologist", 4.7, 100, R.drawable.doctor_2)
     )
 }

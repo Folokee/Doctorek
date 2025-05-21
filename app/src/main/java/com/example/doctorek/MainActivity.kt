@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.doctorek.data.auth.SharedPrefs
 import com.example.doctorek.ui.screens.AppointmentsScreen
 import com.example.doctorek.ui.screens.FavoriteDoctorsScreen
+import com.example.doctorek.ui.screens.DoctorListScreen
 import com.example.doctorek.ui.screens.HomeScreen
 import com.example.doctorek.ui.screens.MainScreen
 import com.example.doctorek.ui.screens.Onboarding
@@ -24,6 +25,8 @@ import com.example.doctorek.ui.screens.ProfileScreen
 import com.example.doctorek.ui.screens.SignInScreen
 import com.example.doctorek.ui.screens.SignUpScreen
 import com.example.doctorek.ui.screens.SlideShow
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,7 +66,19 @@ class MainActivity : ComponentActivity() {
             composable(Screens.FavoriteDoctors.route) {
                 FavoriteDoctorsScreen(navController)
             }
-
+            composable(
+                route = Screens.DoctorList.route + "?category={category}",
+                arguments = listOf(navArgument("category") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                })
+            ) { backStackEntry ->
+                DoctorListScreen(
+                    navController = navController,
+                    initialCategoryFilter = backStackEntry.arguments?.getString("category")
+                )
+            }
         }
     }
 
@@ -76,6 +91,7 @@ sealed class Screens(val route: String) {
     object Main : Screens("main")
 
     object FavoriteDoctors : Screens("favorite_doctors")
+    object DoctorList : Screens("doctors_list") // New screen route
 
     // Nested screens for bottom navigation
     object Home : Screens("home")

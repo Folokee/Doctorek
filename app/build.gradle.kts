@@ -87,6 +87,7 @@ dependencies {
     //Supabase client
     implementation("io.github.jan-tennert.supabase:gotrue-kt:1.3.2")
     implementation("io.ktor:ktor-client-cio:2.3.4")
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
 
     implementation(libs.androidx.material.icons.extended)
