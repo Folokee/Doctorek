@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.doctorek.data.auth.SharedPrefs
 import com.example.doctorek.data.auth.SupabaseClient.client
+import com.example.doctorek.data.repositories.AuthRepository
 
 import kotlinx.coroutines.launch
 
@@ -29,6 +30,7 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
     private val _userState = mutableStateOf<UserState>(UserState())
     val userState: State<UserState> = _userState
     private val sharedPref = SharedPrefs(application.applicationContext)
+    private val repository = AuthRepository(application.applicationContext)
 
     fun signUp(
         userEmail: String,
@@ -41,25 +43,7 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                     Loading = true
                 )
 
-                if (role == "patient") {
-                    client.gotrue.signUpWith(Email){
-                        email = userEmail
-                        password = userPassword
-                    }
-                } else {
-                    client.gotrue.signUpWith(Email) {
-                        email = userEmail
-                        password = userPassword
-                        data = JsonObject(
-                            mapOf(
-                                "user_type" to JsonPrimitive(role)
-                            )
-                        )
-                    }
-                }
-                saveToken()
-                sharedPref.save("user_email", userEmail)
-                saveId()
+                repository.signUp(userEmail, userPassword, role)
                 _userState.value = UserState(
                     Loading = false
                 )
@@ -68,30 +52,10 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                 )
             } catch(e: Exception) {
                 _userState.value = UserState(
-                    errorMessage = e.message ?: ""
+                    errorMessage = e.message ?: "Signup Failed"
                 )
             }
         }
-    }
-
-    private fun saveToken() {
-        viewModelScope.launch {
-            val session = client.gotrue.currentSessionOrNull()
-            val accessToken = session?.accessToken
-            sharedPref.saveAccess(accessToken ?: "null")
-        }
-    }
-
-    private fun saveId(){
-        viewModelScope.launch {
-            val session = client.gotrue.currentSessionOrNull()
-            val userId = session?.user?.id
-            sharedPref.save("user_id", userId ?: "null")
-        }
-    }
-
-    private fun getToken(): String? {
-        return sharedPref.getAccess()
     }
 
 
@@ -104,13 +68,7 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                 _userState.value = UserState(
                     Loading = true
                 )
-                client.gotrue.loginWith(Email) {
-                    email = userEmail
-                    password = userPassword
-                }
-                saveToken()
-                sharedPref.save("user_email", userEmail)
-                saveId()
+                repository.signIn(userEmail, userPassword)
                 _userState.value = UserState(
                     Loading = false
                 )
@@ -119,7 +77,7 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                 )
             } catch (e: Exception) {
                 _userState.value = UserState(
-                    errorMessage = e.message ?: ""
+                    errorMessage = e.message ?: "Login Failed"
                 )
             }
         }
@@ -131,7 +89,7 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                 _userState.value = UserState(
                     Loading = true
                 )
-                client.gotrue.logout()
+                repository.logout()
                 sharedPref.clearAll()
                 _userState.value = UserState(
                     Loading = false
@@ -141,8 +99,9 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                 )
             } catch (e: Exception) {
                 _userState.value = UserState(
-                    errorMessage = e.message ?: ""
-                )            }
+                    errorMessage = e.message ?: "Logout Error"
+                )
+            }
         }
     }
 

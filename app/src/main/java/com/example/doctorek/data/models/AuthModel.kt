@@ -10,3 +10,14 @@ data class SigninResponse(
     val refreshToken: String,
     val userId: String
 )
+data class SignupResponse(
+    val accessToken: String,
+    val refreshToken: String,
+    val userId: String
+)
+
+data class SignupRequest(
+    val email: String,
+    val password: String,
+    val user_type: String,
+)

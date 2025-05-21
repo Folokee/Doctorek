@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.doctorek.data.auth.SharedPrefs
 import com.example.doctorek.data.models.ProfileModel
 import com.example.doctorek.data.repositories.ProfileRepository
-import io.ktor.utils.io.concurrent.shared
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

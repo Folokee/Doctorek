@@ -22,6 +22,13 @@ class SharedPrefs(private val context: Context){
         return sharedPreferences.getBoolean("onboarding", true)
     }
 
+    fun saveUserId(value: String) {
+        sharedPreferences.edit() { putString("user_id", value) }
+    }
+    fun getUserId(): String? {
+        return sharedPreferences.getString("user_id", null)
+    }
+
     fun save(key : String, value : String){
         sharedPreferences.edit() { putString(key, value) }
     }

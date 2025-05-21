@@ -5,6 +5,11 @@ import com.example.doctorek.data.models.DoctorDetailResponse
 import com.example.doctorek.data.models.DoctorResponse
 import com.example.doctorek.data.models.ProfileModel
 import com.example.doctorek.data.models.ProfileResponse
+import com.example.doctorek.data.models.ResponseModel
+import com.example.doctorek.data.models.SigninRequest
+import com.example.doctorek.data.models.SigninResponse
+import com.example.doctorek.data.models.SignupRequest
+import com.example.doctorek.data.models.SignupResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -15,19 +20,15 @@ import retrofit2.http.Query
 
 
 interface ApiService {
-    @PATCH("/rest/v1/profiles")
+    @PATCH("api/profile/")
     suspend fun updateProfile(
         @Body
         profile: ProfileModel,
         @Header("Authorization")
         token : String,
-        @Header("apiKey")
-        apiKey : String,
-        @Query("id")
-        id : String
-    ): Response<Any>
+    ): Response<ResponseModel>
 
-    @GET("/rest/v1/profiles")
+    @GET("api/profile/")
     suspend fun getProfile(
         @Header("Authorization")
         token : String,
@@ -51,5 +52,25 @@ interface ApiService {
         @Query(value = "select", encoded = true) hh: String = "id,user_id,specialty,hospital_name,hospital_address,location_lat,location_lng,bio,years_of_experience,contact_information,average_rating,created_at,updated_at,doctor_availability!left(day_of_week,is_available),profiles!inner(full_name,avatar_url)",
         @Query(value = "doctor_availability.is_available", encoded = true) filter: String = "eq.true"
     ): Response<List<DoctorDetailResponse>>
+
+    @POST("/api/signup")
+    suspend fun signUp(
+        @Body
+        request : SignupRequest
+    ) : Response<SignupResponse>
+
+    @POST("/api/signin")
+    suspend fun signIn(
+        @Body
+        request : SigninRequest
+    ) : Response<SigninResponse>
+
+    @POST("/api/signout")
+    suspend fun logout(
+        @Header("Authorization")
+        token : String,
+    ) : Response<Any>
+
+
 
 }
