@@ -7,8 +7,10 @@ import com.example.doctorek.data.api.ApiService
 import com.example.doctorek.data.auth.SharedPrefs
 import com.example.doctorek.data.models.DoctorDetailResponse
 import com.example.doctorek.data.models.DoctorResponse
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 
 class DoctorRepository (private val context : Context) {
     private val apiService = ApiClient.apiService
@@ -50,6 +52,23 @@ class DoctorRepository (private val context : Context) {
             }
         } catch (e: Exception) {
             emit(Result.failure(e))
+        }
+    }
+
+    suspend fun getDoctorById(doctorId: String): Result<DoctorDetailResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getDoctorById(doctorId)
+                if (response.isSuccessful) {
+                    response.body()?.let {
+                        Result.success(it)
+                    } ?: Result.failure(Exception("Doctor data is null"))
+                } else {
+                    Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 }

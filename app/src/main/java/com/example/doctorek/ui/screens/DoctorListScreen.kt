@@ -226,8 +226,10 @@ fun DoctorListScreen(
                     contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
                 ) {
                     items(filteredDoctors, key = { it.id }) { doctor ->
-                        DoctorListItem(doctor = doctor, onClick = {
-                            // navController.navigate(Screens.DoctorDetails.createRoute(doctor.id)) // TODO: Add DoctorDetails screen
+                        DoctorListItem(doctor = doctor,
+                            onClick = {
+                                // Navigate to doctor details screen with doctor ID
+                                navController.navigate("doctorDetail/${doctor.id}")
                         })
                     }
                 }
