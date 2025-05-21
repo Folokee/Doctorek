@@ -5,30 +5,23 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.doctorek.data.auth.SharedPrefs
-import com.example.doctorek.ui.screens.AppointmentsScreen
-import com.example.doctorek.ui.screens.FavoriteDoctorsScreen
-import com.example.doctorek.ui.screens.DoctorListScreen
-import com.example.doctorek.ui.screens.HomeScreen
-import com.example.doctorek.ui.screens.MainScreen
-import com.example.doctorek.ui.screens.Onboarding
-import com.example.doctorek.ui.screens.PrescriptionsScreen
-import com.example.doctorek.ui.screens.ProfileScreen
-import com.example.doctorek.ui.screens.SignInScreen
-import com.example.doctorek.ui.screens.SignUpScreen
-import com.example.doctorek.ui.screens.SlideShow
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.doctorek.ui.screens.DoctorListScreen
+import com.example.doctorek.ui.screens.FavoriteDoctorsScreen
+import com.example.doctorek.ui.screens.MainScreen
+import com.example.doctorek.ui.screens.ProfileScreen
 
 class MainActivity : ComponentActivity() {
+
+    lateinit var sharedPrefs: SharedPrefs
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -42,6 +35,8 @@ class MainActivity : ComponentActivity() {
             true // For dark icons on light background
         insetsController.isAppearanceLightStatusBars =
             true // For dark status bar icons on white background
+
+        sharedPrefs = SharedPrefs(applicationContext)
 
         setContent {
             DoctorekApp()
@@ -73,7 +68,7 @@ class MainActivity : ComponentActivity() {
                     nullable = true
                     defaultValue = null
                 })
-            ) { backStackEntry ->
+            ) { backStackEntry -> 
                 DoctorListScreen(
                     navController = navController,
                     initialCategoryFilter = backStackEntry.arguments?.getString("category")
@@ -81,8 +76,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-
 }
 
 sealed class Screens(val route: String) {

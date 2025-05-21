@@ -2,7 +2,6 @@ package com.example.doctorek
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.ContactsContract
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,10 +17,12 @@ import com.example.doctorek.ui.screens.SignUpScreen
 import com.example.doctorek.ui.screens.SlideShow
 
 class AuthActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
+    
+    private lateinit var sharedPrefs: SharedPrefs
 
-        val sharedPrefs = SharedPrefs(applicationContext)
-        if (sharedPrefs.getAccess() != null){
+    override fun onCreate(savedInstanceState: Bundle?) {
+        sharedPrefs = SharedPrefs(applicationContext)
+        if (sharedPrefs.getAccess() != null) {
             val intent = Intent(this, MainActivity::class.java)
             this.startActivity(intent)
             finish()
@@ -41,10 +42,10 @@ class AuthActivity : ComponentActivity() {
         val isFirstTime = sharedPrefs.getFirstTime()
         NavHost(
             navController = navController,
-            startDestination = if(isFirstTime) AuthScreens.Slideshow.route else AuthScreens.Onboarding.route
-        ){
-            composable(AuthScreens.Slideshow.route){ SlideShow(navController) }
-            composable(AuthScreens.Signup.route){ SignUpScreen(navController) }
+            startDestination = if (isFirstTime) AuthScreens.Slideshow.route else AuthScreens.Onboarding.route
+        ) {
+            composable(AuthScreens.Slideshow.route) { SlideShow(navController) }
+            composable(AuthScreens.Signup.route) { SignUpScreen(navController) }
             composable(AuthScreens.Signin.route) { SignInScreen(navController) }
             composable(AuthScreens.Onboarding.route) { Onboarding(navController) }
             composable(AuthScreens.ProfileDetails.route) { ProfileDetailsScreen() }
@@ -52,7 +53,7 @@ class AuthActivity : ComponentActivity() {
     }
 }
 
-sealed class AuthScreens(val route : String){
+sealed class AuthScreens(val route: String) {
     object Slideshow : Screens("slideshow")
     object Signup : Screens("signup")
     object Signin : Screens("signin")

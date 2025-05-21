@@ -34,7 +34,7 @@ interface ApiService {
         token : String,
     ): Response<ProfileResponse>
 
-    @GET("/rest/v1/doctor_profiles?select=id,specialty,hospital_name,average_rating,profiles:user_id(full_name,avatar_url)&order=average_rating.desc")
+    @GET("api/doctors/")
     suspend fun getDoctors(
         @Header("Authorization") token: String,
         @Header("apiKey") apiKey: String
@@ -55,7 +55,7 @@ interface ApiService {
         request : SignupRequest
     ) : Response<SignupResponse>
 
-    @POST("/api/signin/")
+    @POST("/api/login/")
     suspend fun signIn(
         @Body
         request : SigninRequest

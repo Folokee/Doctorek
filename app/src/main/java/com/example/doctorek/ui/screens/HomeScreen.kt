@@ -1,5 +1,11 @@
 package com.example.doctorek.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,9 +40,11 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,16 +57,23 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.doctorek.R
 import com.example.doctorek.Screens
 import com.example.doctorek.ui.components.DoctorekAppBar
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import com.example.doctorek.data.models.DoctorResponse
 import com.example.doctorek.ui.viewmodels.DoctorViewModel
 import coil.compose.AsyncImage
+import androidx.compose.ui.platform.LocalContext
+import com.example.doctorek.MainActivity
+import com.example.doctorek.data.auth.SharedPrefs
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.launch
+import com.example.doctorek.utils.NotificationUtils
 
 val horizontalPadding = 16.dp
 
@@ -70,6 +85,46 @@ fun HomeScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val doctorListState by doctorViewModel.doctorListState.collectAsState()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val mainActivity = context as? MainActivity
+    val sharedPrefs = mainActivity?.sharedPrefs
+    
+    // Permission request launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            Log.d("HomeScreen", "Notification permission granted")
+            // Get FCM token when permission is granted
+            scope.launch {
+                getFCMToken(sharedPrefs)
+            }
+        } else {
+            Log.d("HomeScreen", "Notification permission denied")
+        }
+    }
+    
+    // Check and request notification permission on launch
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            
+            if (hasPermission) {
+                // Permission already granted, get token
+                getFCMToken(sharedPrefs)
+            } else {
+                // Request permission
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            // For devices below Android 13, no runtime permission needed
+            getFCMToken(sharedPrefs)
+        }
+    }
 
     Scaffold(
         containerColor = Color.White,
@@ -189,7 +244,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     maxItemsInEachRow = 4
                 ) {
-                    getDoctorCategories().forEach { category ->
+                    getDoctorCategories().forEach { category -> 
                         DoctorCategoryItem(category = category) {
                             navController.navigate(Screens.DoctorList.route + "?category=${category.name}")
                         }
@@ -237,7 +292,7 @@ fun HomeScreen(
                     } else {
                         val topDoctors = doctorListState.doctors
                             .sortedByDescending { it.average_rating }
-                        topDoctors.forEach { doctor ->
+                        topDoctors.forEach { doctor -> 
                             DoctorCard(doctor = doctor) {
                                 // Handle doctor item click
                             }
@@ -249,6 +304,36 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+    }
+}
+
+private suspend fun getFCMToken(sharedPrefs: SharedPrefs?) {
+    try {
+        if (sharedPrefs == null) {
+            Log.e("HomeScreen", "SharedPrefs is null")
+            return
+        }
+
+        // Get token from Firebase
+        val token = FirebaseMessaging.getInstance().token.await()
+        Log.d("HomeScreen", "Got FCM Token: $token")
+        
+        // Save token locally
+        sharedPrefs.save("fcm_token", token)
+        
+        // Send token to Supabase
+        try {
+            val success = NotificationUtils.updateFcmToken(token, sharedPrefs)
+            if (success) {
+                Log.d("HomeScreen", "FCM token sent successfully to Supabase")
+            } else {
+                Log.e("HomeScreen", "Failed to send FCM token to Supabase")
+            }
+        } catch (e: Exception) {
+            Log.e("HomeScreen", "Error sending FCM token to Supabase", e)
+        }
+    } catch (e: Exception) {
+        Log.e("HomeScreen", "Error getting FCM token", e)
     }
 }
 
@@ -274,7 +359,7 @@ fun FlowRow(
         var currentRow = mutableListOf<Placeable>()
         var currentRowItemCount = 0
 
-        measurables.forEach { measurable ->
+        measurables.forEach { measurable -> 
             if (currentRowItemCount >= maxItemsInEachRow) {
                 rows.add(currentRow)
                 currentRow = mutableListOf()
@@ -294,11 +379,11 @@ fun FlowRow(
         layout(constraints.maxWidth, height) {
             var y = 0
 
-            rows.forEach { row ->
+            rows.forEach { row -> 
                 var x = 0
                 val rowHeight = row.maxOfOrNull { it.height } ?: 0
 
-                row.forEach { placeable ->
+                row.forEach { placeable -> 
                     placeable.placeRelative(x, y)
                     x += itemWidth
                 }

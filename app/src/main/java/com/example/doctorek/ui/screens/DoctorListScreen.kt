@@ -333,7 +333,7 @@ fun DoctorListItem(doctor: DoctorResponse, onClick: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorListFilterBottomSheet(
-    sheetState: SheetState, // Change from Any to SheetState type
+    sheetState: SheetState, 
     allSpecialties: List<String>,
     currentSelectedSpecialties: Set<String>,
     currentMinRating: Float,
