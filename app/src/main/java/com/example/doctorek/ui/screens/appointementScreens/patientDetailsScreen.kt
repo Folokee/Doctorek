@@ -62,7 +62,6 @@ fun PatientDetailsScreen(
                     viewModel.resetAppointmentStatus()
                 },
                 onBackToHome = {
-                    // Reset the state and navigate back to home
                     viewModel.resetAppointmentStatus()
                     onBackClick()
                 }

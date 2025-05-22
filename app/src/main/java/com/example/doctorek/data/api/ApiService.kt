@@ -12,6 +12,7 @@ import com.example.doctorek.data.models.SigninRequest
 import com.example.doctorek.data.models.SigninResponse
 import com.example.doctorek.data.models.SignupRequest
 import com.example.doctorek.data.models.SignupResponse
+import com.example.doctorek.data.models.PatientAppointment
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -71,18 +72,26 @@ interface ApiService {
     ) : Response<Any>
 
 
-    @GET("doctors/{doctorId}")
-    suspend fun getDoctorById(@Path("doctorId") doctorId: String): Response<DoctorDetailResponse>
+    @GET("/api/doctors/")
+    suspend fun getDoctorById(@Query("id") doctorId: String,
+    @Header("Authorization") token: String,
+    ): Response<DoctorDetailResponse>
 
-    @GET("doctors/{doctorId}/appointments/available")
+    @GET("/api/doctors/{doctorId}/appointments/available")
     suspend fun getAvailableSlots(
         @Path("doctorId") doctorId: String,
         @Query("date") date: String
     ): Response<Map<String, List<String>>>
 
-    @POST("appointments")
+    @POST("/api/appointments")
     suspend fun bookAppointment(
         @Body appointmentRequest: AppointmentRequest
     ): Response<AppointmentResponse>
+
+    @GET("/api/appointments/patient_appointments/")
+    suspend fun getPatientAppointments(
+        @Query("patient_id") patientId: String,
+        @Header("Authorization") token: String
+    ): Response<List<PatientAppointment>>
 
 }

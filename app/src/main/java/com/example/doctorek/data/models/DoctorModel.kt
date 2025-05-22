@@ -1,6 +1,5 @@
 package com.example.doctorek.data.models
 
-
 data class DoctorProfileInfo(
     val full_name: String?,
     val avatar_url: String?
@@ -28,7 +27,8 @@ data class DoctorDetailResponse(
     val average_rating: Double,
     val profiles: DoctorProfileInfo,
     val created_at: String,
-    val updated_at: String
+    val updated_at: String,
+    val doctor_availability: List<DoctorAvailability> = emptyList() // Added doctor availability
 )
 
 data class ContactInformation(

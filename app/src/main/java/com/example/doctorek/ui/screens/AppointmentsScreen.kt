@@ -1,14 +1,18 @@
 package com.example.doctorek.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.QrCode
@@ -19,6 +23,7 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,40 +40,80 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.doctorek.R
+import com.example.doctorek.data.models.PatientAppointment
 import com.example.doctorek.ui.components.DoctorekAppBar
-import kotlinx.coroutines.launch
+import com.example.doctorek.ui.viewmodels.AppointmentFilter
+import com.example.doctorek.ui.viewmodels.PatientAppointmentViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppointmentsScreen(navController: NavController) {
+    val viewModel: PatientAppointmentViewModel = viewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val uniqueSpecialties by viewModel.uniqueSpecialties.collectAsStateWithLifecycle()
+    val selectedSpecialties by viewModel.selectedSpecialties.collectAsStateWithLifecycle()
+
     val scope = rememberCoroutineScope()
-    val appointments = remember { getAppointments() }
-    val categories = listOf("All", "Brain", "Cardio", "Eye")
-    var selectedCategory by remember { mutableStateOf("All") }
+    val categories = listOf("All", "Scheduled", "Confirmed", "Completed", "Cancelled")
     var showFilterSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var qrDialogAppointment by remember { mutableStateOf<Appointment?>(null) }
-    var detailsDialogAppointment by remember { mutableStateOf<Appointment?>(null) }
+    var qrDialogAppointment by remember { mutableStateOf<PatientAppointment?>(null) }
+    var detailsDialogAppointment by remember { mutableStateOf<PatientAppointment?>(null) }
     val scrollState = rememberLazyListState()
 
-    // Animation state for header
-    val scrollOffset = remember { derivedStateOf { scrollState.firstVisibleItemScrollOffset } }
-    val isScrolled = scrollOffset.value > 0
+    var selectedFilters by remember { mutableStateOf(setOf<String>()) }
+    var selectedCategory by remember { mutableStateOf("All") }
 
-    // Filter state
-    var filterState by remember { mutableStateOf("All") }
-    var filterDoctor by remember { mutableStateOf("") }
-    var filterDate by remember { mutableStateOf("") }
-
-    // Search state
     var searchText by remember { mutableStateOf("") }
 
-    // Color palette - match prescription screen
-    val blueColor = colorResource(id = R.color.blue) // Primary color for appointments
+    val blueColor = colorResource(id = R.color.blue)
     val greenColor = colorResource(id = R.color.bottle_green)
     val lightBlueColor = colorResource(id = R.color.light_blue)
+
+    val filteredAppointments = state.filteredAppointments
+
+    val onFilterSelected: (String) -> Unit = { filter ->
+        selectedCategory = filter
+        when (filter) {
+            "All" -> {
+                selectedFilters = emptySet()
+                viewModel.setFilter(AppointmentFilter.ALL)
+            }
+            "Confirmed" -> {
+                selectedFilters = setOf("confirmed")
+                viewModel.setFilter(AppointmentFilter.CONFIRMED)
+            }
+            "Scheduled" -> {
+                selectedFilters = setOf("scheduled")
+                viewModel.setFilter(AppointmentFilter.SCHEDULED)
+            }
+            "Completed" -> {
+                selectedFilters = setOf("completed")
+                viewModel.setFilter(AppointmentFilter.COMPLETED)
+            }
+            "Cancelled" -> {
+                selectedFilters = setOf("cancelled")
+                viewModel.setFilter(AppointmentFilter.CANCELLED)
+            }
+            else -> {
+                selectedFilters = emptySet()
+                viewModel.setFilter(AppointmentFilter.ALL)
+            }
+        }
+    }
+
+    val onSearch: (String) -> Unit = { query ->
+        searchText = query
+        viewModel.searchAppointments(query)
+    }
+
+    // Use temporary variables for the filter bottom sheet
+    var tempSelectedSpecialties by remember(selectedSpecialties) { mutableStateOf(selectedSpecialties) }
 
     Scaffold(
         containerColor = Color.White,
@@ -96,76 +141,76 @@ fun AppointmentsScreen(navController: NavController) {
                 .background(Color.White)
                 .padding(paddingValues)
         ) {
-            // Header banner matching prescription screen style
-            if (!isScrolled) {
+            // Header banner - now always visible, not scroll-dependent
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .padding(16.dp)
+            ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(
-                                        blueColor,
-                                        blueColor.copy(alpha = 0.8f)
-                                    )
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    blueColor,
+                                    blueColor.copy(alpha = 0.8f)
                                 )
                             )
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .weight(1f)
+                                .padding(end = 8.dp)
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 8.dp)
-                            ) {
-                                Text(
-                                    "Manage Your Appointments",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    "Schedule and track your upcoming visits",
-                                    fontSize = 14.sp,
-                                    color = Color.White.copy(alpha = 0.9f),
-                                    maxLines = 2
-                                )
-                            }
+                            Text(
+                                "Manage Your Appointments",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "Schedule and track your upcoming visits",
+                                fontSize = 14.sp,
+                                color = Color.White.copy(alpha = 0.9f),
+                                maxLines = 2
+                            )
+                        }
 
-                            // Calendar icon
-                            Box(
-                                modifier = Modifier
-                                    .size(60.dp)
-                                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Event,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(36.dp)
-                                )
-                            }
+                        Box(
+                            modifier = Modifier
+                                .size(60.dp)
+                                .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Event,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(36.dp)
+                            )
                         }
                     }
                 }
             }
 
-            // Search bar matching prescription screen
+            // Search bar and other content
             OutlinedTextField(
                 value = searchText,
-                onValueChange = { searchText = it },
+                onValueChange = {
+                    searchText = it
+                    onSearch(it)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -199,111 +244,150 @@ fun AppointmentsScreen(navController: NavController) {
                 )
             )
 
-            // Categories Row
-            LazyRow(
+            // The rest of the UI in a Column with weight to push it below the header
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .weight(1f)
             ) {
-                items(categories) { category ->
-                    Button(
-                        onClick = { selectedCategory = category },
-                        shape = RoundedCornerShape(20.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (selectedCategory == category)
-                                blueColor
-                            else
-                                Color.White,
-                            contentColor = if (selectedCategory == category)
-                                Color.White
-                            else
-                                colorResource(id = R.color.gray)
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-                    ) {
-                        Text(category)
-                    }
-                }
-            }
-
-            // Appointments List
-            val filteredAppointments = appointments.filter { appt ->
-                (selectedCategory == "All" || appt.category == selectedCategory) &&
-                (filterState == "All" || appt.state == filterState) &&
-                (filterDoctor.isBlank() || appt.doctorName.contains(filterDoctor, ignoreCase = true)) &&
-                (filterDate.isBlank() || appt.date.contains(filterDate)) &&
-                (searchText.isBlank() ||
-                    appt.doctorName.contains(searchText, ignoreCase = true) ||
-                    appt.specialty.contains(searchText, ignoreCase = true) ||
-                    appt.category.contains(searchText, ignoreCase = true))
-            }
-
-            LazyColumn(
-                state = scrollState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
-            ) {
-                items(filteredAppointments) { appointment ->
-                    AppointmentCard(
-                        appointment = appointment,
-                        onQrClick = { qrDialogAppointment = appointment },
-                        onCardClick = { detailsDialogAppointment = appointment }
-                    )
-                }
-
-                // Empty state matching prescription screen
-                if (filteredAppointments.isEmpty()) {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                // Categories Row
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(categories) { category ->
+                        val isSelected = category == selectedCategory
+                        Button(
+                            onClick = { onFilterSelected(category) },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected)
+                                    blueColor
+                                else
+                                    Color.White,
+                                contentColor = if (isSelected)
+                                    Color.White
+                                else
+                                    colorResource(id = R.color.gray)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = if (isSelected) 2.dp else 0.dp),
+                            border = if (!isSelected) BorderStroke(1.dp, Color(0xFFE0E0E0)) else null
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(120.dp)
-                                    .background(blueColor.copy(alpha = 0.1f), shape = RoundedCornerShape(16.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Event,
-                                    contentDescription = "No appointments",
-                                    tint = blueColor,
-                                    modifier = Modifier.size(80.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
                             Text(
-                                text = "No appointments found",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFF2E3A59)
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = "Schedule a new appointment or try different search terms",
-                                fontSize = 14.sp,
-                                color = Color.Gray,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 32.dp)
+                                category,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                             )
                         }
+                    }
+                }
+
+                if (state.loading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = blueColor)
+                    }
+                } else if (state.error != null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "Error: ${state.error}",
+                                color = Color.Red,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { viewModel.fetchPatientAppointments() },
+                                colors = ButtonDefaults.buttonColors(containerColor = blueColor)
+                            ) {
+                                Text("Retry")
+                            }
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        state = scrollState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        items(filteredAppointments) { appointment ->
+                            PatientAppointmentCard(
+                                appointment = appointment,
+                                onCardClick = { detailsDialogAppointment = appointment },
+                                onQrClick = { qrDialogAppointment = appointment }
+                            )
+                        }
+
+                        if (filteredAppointments.isEmpty()) {
+                            item {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 32.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(120.dp)
+                                            .background(blueColor.copy(alpha = 0.1f), shape = RoundedCornerShape(16.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Event,
+                                            contentDescription = "No appointments",
+                                            tint = blueColor,
+                                            modifier = Modifier.size(80.dp)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Text(
+                                        text = "No appointments found",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF2E3A59)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "Schedule a new appointment or try different search terms",
+                                        fontSize = 14.sp,
+                                        color = Color.Gray,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(horizontal = 32.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (state.filteredAppointments.isNotEmpty() && selectedCategory != "All") {
+                        Text(
+                            text = "Showing ${state.filteredAppointments.size} ${selectedCategory.lowercase()} appointments",
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            color = colorResource(id = R.color.gray),
+                            fontSize = 12.sp
+                        )
                     }
                 }
             }
         }
     }
 
-    // Filter Bottom Sheet - keep existing implementation
     if (showFilterSheet) {
         ModalBottomSheet(
             onDismissRequest = { showFilterSheet = false },
@@ -315,6 +399,8 @@ fun AppointmentsScreen(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(8.dp)
+                        .padding(vertical = 8.dp)
+                        .width(40.dp)
                         .background(colorResource(id = R.color.light_gray), RoundedCornerShape(4.dp))
                 )
             }
@@ -324,98 +410,155 @@ fun AppointmentsScreen(navController: NavController) {
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                Text(
-                    "Filter Appointments",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colorResource(id = R.color.black)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Filter by Specialty",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colorResource(id = R.color.black)
+                    )
 
-                // Filter by State
-                Text("Status", fontWeight = FontWeight.Medium, color = colorResource(id = R.color.black))
-                Spacer(modifier = Modifier.height(8.dp))
-                val states = listOf("All", "Confirmed", "Pending", "Completed", "Cancelled")
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(states) { state ->
-                        OutlinedButton(
-                            onClick = { filterState = state },
-                            shape = RoundedCornerShape(20.dp),
-                            border = if (filterState == state) ButtonDefaults.outlinedButtonBorder else null,
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (filterState == state)
-                                    colorResource(id = R.color.blue)
-                                else
-                                    colorResource(id = R.color.white),
-                                contentColor = if (filterState == state)
-                                    colorResource(id = R.color.white)
-                                else
-                                    colorResource(id = R.color.gray)
-                            )
-                        ) {
-                            Text(state)
-                        }
+                    IconButton(
+                        onClick = { showFilterSheet = false },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFF5F5F5))
+                    ) {
+                        Icon(
+                            Icons.Rounded.Close,
+                            contentDescription = "Close",
+                            tint = Color.DarkGray
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color(0xFFEEEEEE))
 
-                // Filter by Doctor Name
+                // Specialty Section only
+                Text(
+                    "Doctor Specialty", 
+                    fontWeight = FontWeight.Medium, 
+                    color = colorResource(id = R.color.black)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 280.dp) // Increased height since it's the only section now
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    uniqueSpecialties.forEach { specialty ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    tempSelectedSpecialties = if (tempSelectedSpecialties.contains(specialty)) {
+                                        tempSelectedSpecialties - specialty
+                                    } else {
+                                        tempSelectedSpecialties + specialty
+                                    }
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = tempSelectedSpecialties.contains(specialty),
+                                onCheckedChange = {
+                                    tempSelectedSpecialties = if (it) {
+                                        tempSelectedSpecialties + specialty
+                                    } else {
+                                        tempSelectedSpecialties - specialty
+                                    }
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = colorResource(id = R.color.blue)
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(specialty, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                    
+                    if (uniqueSpecialties.isEmpty()) {
+                        Text(
+                            "No specialties found",
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Search section - Keep the doctor name search functionality
                 Text("Doctor Name", fontWeight = FontWeight.Medium, color = colorResource(id = R.color.black))
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = filterDoctor,
-                    onValueChange = { filterDoctor = it },
+                    value = searchText,
+                    onValueChange = {
+                        searchText = it
+                        onSearch(it)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("Enter doctor name") },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Filter by Date (simple string match)
-                Text("Date", fontWeight = FontWeight.Medium, color = colorResource(id = R.color.black))
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = filterDate,
-                    onValueChange = { filterDate = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("YYYY-MM-DD") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp)
-                )
-
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
-                    onClick = { showFilterSheet = false },
+                // Action buttons
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.blue))
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Apply", color = colorResource(id = R.color.white))
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = {
-                        filterState = "All"
-                        filterDoctor = ""
-                        filterDate = ""
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colorResource(id = R.color.blue)
-                    )
-                ) {
-                    Text("Reset")
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.resetFilters()
+                            selectedCategory = "All"
+                            tempSelectedSpecialties = emptySet()
+                            searchText = ""
+                            showFilterSheet = false
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = colorResource(id = R.color.blue)
+                        ),
+                        border = BorderStroke(1.dp, colorResource(id = R.color.blue))
+                    ) {
+                        Text("Reset")
+                    }
+
+                    Button(
+                        onClick = { 
+                            viewModel.updateSpecialtyFilters(tempSelectedSpecialties)
+                            showFilterSheet = false
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorResource(id = R.color.blue)
+                        )
+                    ) {
+                        Text("Apply", color = colorResource(id = R.color.white))
+                    }
                 }
             }
         }
     }
 
-    // QR Code Dialog - enhance with blue accent
     if (qrDialogAppointment != null) {
         Dialog(
             onDismissRequest = { qrDialogAppointment = null },
@@ -432,7 +575,6 @@ fun AppointmentsScreen(navController: NavController) {
                         .widthIn(min = 260.dp, max = 320.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // QR code with enhanced styling
                     Box(
                         modifier = Modifier
                             .size(180.dp)
@@ -467,7 +609,6 @@ fun AppointmentsScreen(navController: NavController) {
         }
     }
 
-    // Appointment Details Dialog - enhance with blue accent
     if (detailsDialogAppointment != null) {
         Dialog(
             onDismissRequest = { detailsDialogAppointment = null },
@@ -492,23 +633,47 @@ fun AppointmentsScreen(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     val appt = detailsDialogAppointment!!
-                    InfoRow("Doctor", appt.doctorName)
-                    InfoRow("Specialty", appt.specialty)
-                    InfoRow("Category", appt.category)
-                    InfoRow("Date", appt.date)
-                    InfoRow("Status", appt.state)
+
+                    InfoRow("Doctor ID", appt.doctor_id)
+                    if (appt.doctor_info != null) {
+                        if (appt.doctor_info.full_name != null) {
+                            InfoRow("Doctor Name", appt.doctor_info.full_name)
+                        }
+                        if (appt.doctor_info.speciality != null) {
+                            InfoRow("Specialty", appt.doctor_info.speciality)
+                        }
+                        if (appt.doctor_info.hospital_name != null) {
+                            InfoRow("Hospital", appt.doctor_info.hospital_name)
+                        }
+                    }
+                    InfoRow("Date", "${appt.appointment_date} at ${appt.appointment_time}")
+                    InfoRow("Status", capitalizeStatus(appt.status))
+                    if (appt.reason != null) {
+                        InfoRow("Reason", appt.reason)
+                    }
+                    if (appt.notes != null && appt.notes.isNotBlank()) {
+                        InfoRow("Notes", appt.notes)
+                    }
+
                     Spacer(modifier = Modifier.height(20.dp))
                     Button(
                         onClick = { detailsDialogAppointment = null },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = blueColor)
+                        colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.blue))
                     ) {
                         Text("Close", color = colorResource(id = R.color.white))
                     }
                 }
             }
         }
+    }
+}
+
+// Helper function to properly capitalize status for display
+fun capitalizeStatus(status: String): String {
+    return status.replaceFirstChar { 
+        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() 
     }
 }
 
@@ -531,80 +696,126 @@ fun InfoRow(label: String, value: String) {
 }
 
 @Composable
-fun AppointmentCard(
-    appointment: Appointment,
+fun PatientAppointmentCard(
+    appointment: PatientAppointment,
     onQrClick: () -> Unit,
     onCardClick: () -> Unit
 ) {
+    val statusColor = getStatusColor(appointment.status)
+
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = colorResource(id = R.color.white)),
         elevation = CardDefaults.cardElevation(2.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .border(
+                width = 2.dp,
+                color = statusColor.copy(alpha = 0.7f),
+                shape = RoundedCornerShape(16.dp)
+            )
             .clickable { onCardClick() }
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp)
         ) {
-            // State Icon
-            AppointmentStateIcon(state = appointment.state)
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    appointment.doctorName,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = colorResource(id = R.color.black)
-                )
-                Text(
-                    appointment.specialty,
-                    color = colorResource(id = R.color.gray),
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Outlined.Event,
-                        contentDescription = "Date",
-                        tint = colorResource(id = R.color.gray),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = statusColor.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                ) {
                     Text(
-                        appointment.date,
-                        fontSize = 14.sp,
-                        color = colorResource(id = R.color.gray)
+                        text = capitalizeStatus(appointment.status),
+                        color = statusColor,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 12.sp
                     )
+                }
+
+                IconButton(
+                    onClick = onQrClick,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(colorResource(id = R.color.light_blue), shape = CircleShape),
+                ) {
+                    Icon(Icons.Default.QrCode, "QR Code", tint = colorResource(id = R.color.black))
                 }
             }
 
-            IconButton(
-                onClick = {
-                    onQrClick()
-                },
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(colorResource(id = R.color.light_blue), shape = CircleShape),
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.QrCode, "QR Code", tint = colorResource(id = R.color.black))
+                AppointmentStateIcon(state = appointment.status)
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = appointment.doctor_info?.full_name ?: "Doctor #${appointment.doctor_id}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = colorResource(id = R.color.black)
+                    )
+
+                    Text(
+                        text = appointment.doctor_info?.speciality ?: (appointment.reason ?: "Appointment"),
+                        color = colorResource(id = R.color.gray),
+                        fontSize = 14.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.Event,
+                            contentDescription = "Date",
+                            tint = colorResource(id = R.color.gray),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "${appointment.appointment_date} at ${appointment.appointment_time}",
+                            fontSize = 14.sp,
+                            color = colorResource(id = R.color.gray)
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
+fun getStatusColor(status: String): Color {
+    return when (status.lowercase()) {
+        "confirmed" -> colorResource(id = R.color.bottle_green)
+        "scheduled", "pending" -> colorResource(id = R.color.blue)
+        "completed" -> colorResource(id = R.color.bottle_green)
+        "cancelled" -> colorResource(id = R.color.pink)
+        else -> colorResource(id = R.color.gray)
+    }
+}
+
+@Composable
 fun AppointmentStateIcon(state: String) {
-    val (icon, color) = when (state) {
-        "Confirmed" -> Icons.Default.CheckCircle to colorResource(id = R.color.bottle_green)
-        "Pending" -> Icons.Default.HourglassEmpty to colorResource(id = R.color.pink)
-        "Completed" -> Icons.Default.DoneAll to colorResource(id = R.color.blue)
-        "Cancelled" -> Icons.Default.Cancel to colorResource(id = R.color.pink)
+    val (icon, color) = when (state.lowercase()) {
+        "confirmed" -> Icons.Default.CheckCircle to colorResource(id = R.color.bottle_green)
+        "scheduled", "pending" -> Icons.Default.HourglassEmpty to colorResource(id = R.color.blue)
+        "completed" -> Icons.Default.DoneAll to colorResource(id = R.color.blue)
+        "cancelled" -> Icons.Default.Cancel to colorResource(id = R.color.pink)
         else -> Icons.Default.Event to colorResource(id = R.color.gray)
     }
     Box(
@@ -620,22 +831,4 @@ fun AppointmentStateIcon(state: String) {
             modifier = Modifier.size(28.dp)
         )
     }
-}
-
-data class Appointment(
-    val id: Int,
-    val doctorName: String,
-    val specialty: String,
-    val state: String,
-    val category: String,
-    val date: String
-)
-
-fun getAppointments(): List<Appointment> {
-    return listOf(
-        Appointment(1, "Dr. Eleanor Pena", "Cardio specialist", "Confirmed", "Cardio", "2024-06-10 09:00"),
-        Appointment(2, "Dr. Eleanor Pena", "Cardio specialist", "Pending", "Brain", "2024-06-12 14:30"),
-        Appointment(3, "Dr. Eleanor Pena", "Cardio specialist", "Completed", "Eye", "2024-05-30 11:00"),
-        Appointment(4, "Dr. Eleanor Pena", "Cardio specialist", "Cancelled", "Cardio", "2024-06-01 16:00")
-    )
 }

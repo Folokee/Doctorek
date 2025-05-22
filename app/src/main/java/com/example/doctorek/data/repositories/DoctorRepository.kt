@@ -57,8 +57,9 @@ class DoctorRepository (private val context : Context) {
 
     suspend fun getDoctorById(doctorId: String): Result<DoctorDetailResponse> {
         return withContext(Dispatchers.IO) {
+            val token = sharedPrefs.getAccess()
             try {
-                val response = apiService.getDoctorById(doctorId)
+                val response = apiService.getDoctorById(doctorId, "Bearer $token")
                 if (response.isSuccessful) {
                     response.body()?.let {
                         Result.success(it)
