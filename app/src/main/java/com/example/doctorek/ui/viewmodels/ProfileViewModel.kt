@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 
 data class ProfileState(
     val loading: Boolean = false,
+    val isLoggingOut: Boolean = false,
+    val logoutSuccess: Boolean = false,
     val errorMessage: String? = null,
     val profile: ProfileModel = ProfileModel(),
     val success : Boolean = false
@@ -32,7 +34,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             getProfile()
         }
     }
-
 
     fun getProfile() {
         viewModelScope.launch {
@@ -113,6 +114,44 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                             ?: "Failed to update profile"
                     )
                 }
+            }
+        }
+    }
+
+    fun logout(onComplete: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            _profileState.update {
+                it.copy(loading = true, isLoggingOut = true)
+            }
+            
+            try {
+                // Call logout endpoint if needed
+                if (sharedPref.getAccess() != null) {
+                    repository.logout()
+                }
+                
+                // Clear all shared preferences
+                sharedPref.clearAll()
+                
+                _profileState.update {
+                    it.copy(
+                        loading = false,
+                        isLoggingOut = false,
+                        logoutSuccess = true,
+                        profile = ProfileModel(), // Reset profile data
+                        success = true
+                    )
+                }
+                onComplete(true)
+            } catch (e: Exception) {
+                _profileState.update {
+                    it.copy(
+                        loading = false,
+                        isLoggingOut = false,
+                        errorMessage = "Failed to logout: ${e.message}"
+                    )
+                }
+                onComplete(false)
             }
         }
     }

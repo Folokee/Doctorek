@@ -64,4 +64,25 @@ class ProfileRepository(private val context : Context) {
         }
     }
 
+    suspend fun logout(): Result<String> {
+        val token = sharedPrefs.getAccess()
+        
+        return try {
+            if (token != null) {
+                val response = apiService.logout("Bearer $token")
+                if (response.isSuccessful) {
+                    Result.success("Logged out successfully")
+                } else {
+                    // Even if the API call fails, we'll still clear local data
+                    Result.success("Logged out locally")
+                }
+            } else {
+                Result.success("No active session")
+            }
+        } catch (e: Exception) {
+            // Even if the API call throws an exception, we'll still clear local data
+            Result.success("Logged out locally: ${e.message}")
+        }
+    }
+
 }

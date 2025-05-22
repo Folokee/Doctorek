@@ -69,10 +69,17 @@ class PrescriptionViewModel(private val repository: PrescriptionRepository, priv
         } else {
             val filtered = currentPrescriptions.filter { prescription ->
                 prescription.doctor.name.contains(query, ignoreCase = true) ||
-                prescription.details.medications.any { it.name.contains(query, ignoreCase = true) }
+                prescription.prescriptionDate.contains(query, ignoreCase = true) ||
+                prescription.details.medications.any { med -> 
+                    med.name.contains(query, ignoreCase = true)
+                }
             }
             _uiState.update { it.copy(filteredPrescriptions = filtered) }
         }
+    }
+
+    fun refreshPrescriptions() {
+        loadPrescriptions()
     }
 
     fun downloadPrescriptionPdf(prescription: PatientPrescription) {

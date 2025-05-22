@@ -1,5 +1,7 @@
 package com.example.doctorek.ui.screens
 
+import android.app.Activity
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,30 +28,43 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.doctorek.R
 import com.example.doctorek.ui.components.DoctorekAppBar
+import com.example.doctorek.ui.viewmodels.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(
+    navController: NavController,
+    profileViewModel: ProfileViewModel = viewModel()
+) {
+    val profileState by profileViewModel.profileState.collectAsState()
+
     Scaffold(
         containerColor = Color.White,
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
@@ -70,7 +85,18 @@ fun ProfileScreen(navController: NavController) {
                 )
             }
 
-            ProfileHeader()
+            if (profileState.loading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                ProfileHeader(profileState.profile.full_name ?: "", profileState.profile.email ?: "", profileState.profile.avatar_url)
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -78,13 +104,17 @@ fun ProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            LogoutButton(navController)
+            LogoutButton(navController, profileViewModel)
         }
     }
 }
 
 @Composable
-fun ProfileHeader() {
+fun ProfileHeader(
+    fullName: String, 
+    email: String,
+    avatarUrl: String?
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -98,12 +128,28 @@ fun ProfileHeader() {
                 .border(2.dp, colorResource(id = R.color.light_blue), CircleShape),
             contentAlignment = Alignment.BottomEnd
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.doctor_1),
-                contentDescription = "Profile Photo",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
+            if (avatarUrl.isNullOrEmpty()) {
+                // Display placeholder if no avatar URL
+                Image(
+                    painter = painterResource(id = R.drawable.doctor_1),
+                    contentDescription = "Profile Photo",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                // Load avatar from URL
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(data = avatarUrl)
+                            .error(R.drawable.doctor_1)
+                            .build()
+                    ),
+                    contentDescription = "Profile Photo",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             Box(
                 modifier = Modifier
@@ -127,7 +173,7 @@ fun ProfileHeader() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Wido Studio",
+            text = fullName.ifEmpty { "Guest User" },
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
@@ -137,7 +183,7 @@ fun ProfileHeader() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "widostudio@gmail.com",
+            text = email.ifEmpty { "No email provided" },
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = Color.Gray,
                 fontSize = 14.sp
@@ -255,9 +301,29 @@ fun ProfileMenuItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LogoutButton(navController: NavController) {
+fun LogoutButton(
+    navController: NavController,
+    viewModel: ProfileViewModel = viewModel()
+) {
+    val context = LocalContext.current
+    val profileState by viewModel.profileState.collectAsState()
+    
     Card(
-        onClick = { /* Perform logout */ },
+        onClick = {
+            if (!profileState.isLoggingOut) {
+                viewModel.logout { success ->
+                    if (success) {
+                        // Only navigate when logout is successful
+                        val intent = Intent(context, Class.forName("com.example.doctorek.AuthActivity"))
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        context.startActivity(intent)
+                        
+                        // For activities other than context, we need to cast context to get activity
+                        (context as? Activity)?.finish()
+                    }
+                }
+            }
+        },
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp)
@@ -285,30 +351,40 @@ fun LogoutButton(navController: NavController) {
                         .background(Color(0xFFFFE0E6)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_logout),
-                        contentDescription = null,
-                        tint = Color(0xFFFF4B6A),
-                        modifier = Modifier.size(20.dp)
-                    )
+                    if (profileState.isLoggingOut) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color(0xFFFF4B6A),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_logout),
+                            contentDescription = null,
+                            tint = Color(0xFFFF4B6A),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Text(
-                    text = "Logout",
+                    text = if (profileState.isLoggingOut) "Logging out..." else "Logout",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Medium
                     )
                 )
             }
 
-            Icon(
-                imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Navigate",
-                tint = Color.Gray,
-                modifier = Modifier.size(20.dp)
-            )
+            if (!profileState.isLoggingOut) {
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = "Navigate",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }

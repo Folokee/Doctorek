@@ -75,9 +75,13 @@ import androidx.navigation.NavController
 import com.example.doctorek.R
 import com.example.doctorek.ui.components.DoctorekAppBar
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun FavoriteDoctorsScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
@@ -85,6 +89,20 @@ fun FavoriteDoctorsScreen(navController: NavController) {
     var selectedDoctor by remember { mutableStateOf<FavoriteDoctor?>(null) }
     var showRemoveDialog by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
+    
+    // Refresh state
+    var isRefreshing by remember { mutableStateOf(false) }
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = {
+            scope.launch {
+                isRefreshing = true
+                // Simulate refresh with delay
+                delay(1000)
+                isRefreshing = false
+            }
+        }
+    )
 
     // State for filters
     var minRating by remember { mutableFloatStateOf(3.0f) }
@@ -131,111 +149,126 @@ fun FavoriteDoctorsScreen(navController: NavController) {
         containerColor = Color(0xFFF9FAFB),
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .pullRefresh(pullRefreshState)
         ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                DoctorekAppBar(
-                    title = "Favorite Doctors",
-                    modifier = Modifier.padding(top = 30.dp),
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.Rounded.ArrowBack,
-                                contentDescription = "Back",
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(
-                            onClick = { showFilterSheet = true }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FilterList,
-                                contentDescription = "Filter",
-                                tint = colorResource(id = R.color.nav_bar_active_item)
-                            )
-                        }
-                    }
-                )
-            }
-
             Column(
                 modifier = Modifier
-                    .padding(horizontal = horizontalPadding)
-                    .padding(top = 8.dp, bottom = 16.dp)
+                    .fillMaxSize()
             ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    DoctorekAppBar(
+                        title = "Favorite Doctors",
+                        modifier = Modifier.padding(top = 30.dp),
+                        navigationIcon = {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        },
+                        actions = {
+                            IconButton(
+                                onClick = { showFilterSheet = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FilterList,
+                                    contentDescription = "Filter",
+                                    tint = colorResource(id = R.color.nav_bar_active_item)
+                                )
+                            }
+                        }
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = horizontalPadding)
+                        .padding(top = 8.dp, bottom = 16.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        placeholder = {
+                            Text(
+                                "Search for a doctor",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedContainerColor = Color(0xFFF5F5F5),
+                            unfocusedContainerColor = Color(0xFFF5F5F5)
+                        )
+                    )
+                }
+
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
-                    placeholder = {
-                        Text(
-                            "Search for a doctor",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedContainerColor = Color(0xFFF5F5F5),
-                        unfocusedContainerColor = Color(0xFFF5F5F5)
-                    )
-                )
-            }
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = horizontalPadding),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (filteredDoctors.isEmpty()) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No doctors match your criteria",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.Gray
+                        .weight(1f)
+                        .padding(horizontal = horizontalPadding),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    if (filteredDoctors.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No doctors match your criteria",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    } else {
+                        items(filteredDoctors) { doctor ->
+                            FavoriteDoctorItem(
+                                doctor = doctor,
+                                onClick = { navController.navigate("doctorDetail/${doctor.id}") },
+                                onFavoriteClick = {
+                                    selectedDoctor = doctor
+                                    showRemoveDialog = true
+                                }
                             )
                         }
-                    }
-                } else {
-                    items(filteredDoctors) { doctor ->
-                        FavoriteDoctorItem(
-                            doctor = doctor,
-                            onClick = { navController.navigate("doctorDetail/${doctor.id}") },
-                            onFavoriteClick = {
-                                selectedDoctor = doctor
-                                showRemoveDialog = true
-                            }
-                        )
-                    }
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                     }
                 }
             }
+            
+            // Pull-to-refresh indicator
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                backgroundColor = Color.White,
+                contentColor = colorResource(id = R.color.nav_bar_active_item)
+            )
         }
     }
 

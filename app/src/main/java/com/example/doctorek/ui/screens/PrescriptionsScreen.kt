@@ -39,8 +39,12 @@ import com.example.doctorek.ui.viewmodels.PrescriptionViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun PrescriptionsScreen(navController: NavController) {
     val context = LocalContext.current
@@ -51,6 +55,13 @@ fun PrescriptionsScreen(navController: NavController) {
     var searchText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberLazyListState()
+    
+    // Pull-to-refresh state
+    val isRefreshing = uiState.isLoading
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = { viewModel.refreshPrescriptions() }
+    )
     
     // Track when search text changes
     LaunchedEffect(searchText) {
@@ -119,275 +130,276 @@ fun PrescriptionsScreen(navController: NavController) {
                 .fillMaxSize()
                 .background(backgroundColor)
                 .padding(paddingValues)
+                .pullRefresh(pullRefreshState)
         ) {
-            if (uiState.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = violetColor)
-                }
-            } else {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Header banner with more cohesive gradient
-                    if (!isScrolled) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(120.dp)
-                                .padding(16.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(100.dp)
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(
-                                        brush = Brush.horizontalGradient(
-                                            colors = listOf(
-                                                violetColor,
-                                                lavenderColor // Softer violet for gradient
-                                            )
-                                        )
-                                    )
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .padding(end = 8.dp)
-                                    ) {
-                                        Text(
-                                            "Your Medications",
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            "All your prescriptions in one place",
-                                            fontSize = 14.sp,
-                                            color = Color.White.copy(alpha = 0.9f),
-                                            maxLines = 2
-                                        )
-                                    }
-                                    
-                                    // Medicine icon in a diamond shape
-                                    Box(
-                                        modifier = Modifier
-                                            .size(60.dp)
-                                            .rotate(45f)
-                                            .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.MedicalServices,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier
-                                                .size(36.dp)
-                                                .rotate(-45f)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Search Bar with violet styling
-                    OutlinedTextField(
-                        value = searchText,
-                        onValueChange = { searchText = it },
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Header banner with more cohesive gradient
+                if (!isScrolled) {
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .height(56.dp),
-                        placeholder = { Text("Find a prescription") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search",
-                                tint = violetColor
-                            )
-                        },
-                        trailingIcon = {
-                            if (searchText.isNotEmpty()) {
-                                IconButton(onClick = { searchText = "" }) {
-                                    Icon(
-                                        Icons.Default.Clear,
-                                        contentDescription = "Clear",
-                                        tint = Color.Gray
-                                    )
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(28.dp), // More rounded for distinction
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = violetColor,
-                            unfocusedBorderColor = violetColor.copy(alpha = 0.3f),
-                            cursorColor = violetColor
-                        )
-                    )
-
-                    // Prescription count with more cohesive colors
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .height(120.dp)
+                            .padding(16.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Diamond-shaped counter with more cohesive gradient
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .rotate(45f)
-                                    .background(
-                                        brush = Brush.linearGradient(
-                                            colors = listOf(violetColor, lavenderColor)
-                                        ),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "${prescriptionsToDisplay.size}",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp,
-                                    modifier = Modifier.rotate(-45f)
-                                )
-                            }
-                            
-                            Spacer(modifier = Modifier.width(12.dp))
-                            
-                            Text(
-                                text = "Active Prescriptions",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF2E3A59)
-                                )
-                            )
-                        }
-                        
-                        // Sort button with more cohesive colors
-                        TextButton(
-                            onClick = { /* TODO: Sort function */ },
-                            colors = ButtonDefaults.textButtonColors(contentColor = violetColor)
-                        ) {
-                            Text(
-                                "Sort by date",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Medium
-                                )
-                            )
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Sort options"
-                            )
-                        }
-                    }
-                    
-                    // Error message
-                    if (uiState.error != null && !uiState.isLoading) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .height(100.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            violetColor,
+                                            lavenderColor // Softer violet for gradient
+                                        )
+                                    )
+                                )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(end = 8.dp)
+                                ) {
+                                    Text(
+                                        "Your Medications",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        "All your prescriptions in one place",
+                                        fontSize = 14.sp,
+                                        color = Color.White.copy(alpha = 0.9f),
+                                        maxLines = 2
+                                    )
+                                }
+                                
+                                // Medicine icon in a diamond shape
+                                Box(
+                                    modifier = Modifier
+                                        .size(60.dp)
+                                        .rotate(45f)
+                                        .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.MedicalServices,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .rotate(-45f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Search Bar with violet styling
+                OutlinedTextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .height(56.dp),
+                    placeholder = { Text("Find a prescription") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = violetColor
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchText.isNotEmpty()) {
+                            IconButton(onClick = { searchText = "" }) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = "Clear",
+                                    tint = Color.Gray
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(28.dp), // More rounded for distinction
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedBorderColor = violetColor,
+                        unfocusedBorderColor = violetColor.copy(alpha = 0.3f),
+                        cursorColor = violetColor
+                    )
+                )
+
+                // Prescription count with more cohesive colors
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Diamond-shaped counter with more cohesive gradient
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .rotate(45f)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(violetColor, lavenderColor)
+                                    ),
+                                    shape = RoundedCornerShape(8.dp)
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Error: ${uiState.error}",
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                    
-                    // List of prescriptions with violet as primary color
-                    LazyColumn(
-                        state = scrollState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(prescriptionsToDisplay) { prescription ->
-                            PrescriptionCard(
-                                prescription = prescription,
-                                onDownloadClick = { 
-                                    viewModel.downloadPrescriptionPdf(prescription)
-                                },
-                                onCardClick = { detailsDialogPrescription = prescription },
-                                primaryColor = violetColor,
-                                secondaryColor = lavenderColor,
-                                isDownloading = uiState.isDownloading
+                                text = "${prescriptionsToDisplay.size}",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                modifier = Modifier.rotate(-45f)
                             )
                         }
                         
-                        // Empty state with more cohesive colors
-                        if (prescriptionsToDisplay.isEmpty() && !uiState.isLoading) {
-                            item {
-                                Column(
+                        Spacer(modifier = Modifier.width(12.dp))
+                        
+                        Text(
+                            text = "Active Prescriptions",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF2E3A59)
+                            )
+                        )
+                    }
+                    
+                    // Sort button with more cohesive colors
+                    TextButton(
+                        onClick = { /* TODO: Sort function */ },
+                        colors = ButtonDefaults.textButtonColors(contentColor = violetColor)
+                    ) {
+                        Text(
+                            "Sort by date",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Sort options"
+                        )
+                    }
+                }
+                
+                // Error message
+                if (uiState.error != null && !uiState.isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Error: ${uiState.error}",
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+                
+                // List of prescriptions with violet as primary color
+                LazyColumn(
+                    state = scrollState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(prescriptionsToDisplay) { prescription ->
+                        PrescriptionCard(
+                            prescription = prescription,
+                            onDownloadClick = { 
+                                viewModel.downloadPrescriptionPdf(prescription)
+                            },
+                            onCardClick = { detailsDialogPrescription = prescription },
+                            primaryColor = violetColor,
+                            secondaryColor = lavenderColor,
+                            isDownloading = uiState.isDownloading
+                        )
+                    }
+                    
+                    // Empty state with more cohesive colors
+                    if (prescriptionsToDisplay.isEmpty() && !uiState.isLoading) {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                // Colorful empty state with more cohesive colors
+                                Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 32.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                        .size(120.dp)
+                                        .clip(RoundedCornerShape(24.dp))
+                                        .background(paleVioletColor),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    // Colorful empty state with more cohesive colors
-                                    Box(
-                                        modifier = Modifier
-                                            .size(120.dp)
-                                            .clip(RoundedCornerShape(24.dp))
-                                            .background(paleVioletColor),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.MedicalServices,
-                                            contentDescription = "No prescriptions",
-                                            tint = violetColor,
-                                            modifier = Modifier.size(70.dp)
-                                        )
-                                    }
-                                    
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    
-                                    Text(
-                                        text = if (searchText.isEmpty()) 
-                                            "No prescriptions yet!" 
-                                        else 
-                                            "No matching prescriptions",
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = violetColor
-                                    )
-                                    
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    
-                                    Text(
-                                        text = if (searchText.isEmpty())
-                                            "Your prescriptions will appear here"
-                                        else
-                                            "Try different search terms",
-                                        fontSize = 14.sp,
-                                        color = Color.Gray,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(horizontal = 32.dp)
+                                    Icon(
+                                        imageVector = Icons.Default.MedicalServices,
+                                        contentDescription = "No prescriptions",
+                                        tint = violetColor,
+                                        modifier = Modifier.size(70.dp)
                                     )
                                 }
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                Text(
+                                    text = if (searchText.isEmpty()) 
+                                        "No prescriptions yet!" 
+                                    else 
+                                        "No matching prescriptions",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = violetColor
+                                )
+                                
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
+                                Text(
+                                    text = if (searchText.isEmpty())
+                                        "Your prescriptions will appear here"
+                                    else
+                                        "Try different search terms",
+                                    fontSize = 14.sp,
+                                    color = Color.Gray,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 32.dp)
+                                )
                             }
                         }
                     }
                 }
             }
+            
+            // Pull-to-refresh indicator
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                backgroundColor = Color.White,
+                contentColor = violetColor
+            )
         }
     }
 
@@ -757,7 +769,7 @@ fun PrescriptionDetailsDialog(
                     }
                     
                     // List of medications
-                    prescription.details.medications.forEachIndexed { index, medication ->
+                    prescription.details.medications.forEachIndexed { index, medication -> 
                         MedicationItem(
                             medication = medication,
                             index = index,

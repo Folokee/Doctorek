@@ -39,8 +39,12 @@ import com.example.doctorek.ui.components.DoctorekAppBar
 import com.example.doctorek.ui.viewmodels.DoctorListState
 import com.example.doctorek.ui.viewmodels.DoctorViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun DoctorListScreen(
     navController: NavController,
@@ -54,6 +58,13 @@ fun DoctorListScreen(
     var showFilterBottomSheet by remember { mutableStateOf(false) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+
+    // Pull-to-refresh state
+    val isRefreshing = doctorListState.loading
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = { doctorViewModel.refreshDoctors() }
+    )
 
     // Filter states
     var selectedSpecialtiesFilter by remember { mutableStateOf(setOf<String>()) }
@@ -100,139 +111,154 @@ fun DoctorListScreen(
         containerColor = Color(0xFFF9FAFB),
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .pullRefresh(pullRefreshState)
         ) {
-            DoctorekAppBar(
-                title = "All Doctors",
-                modifier = Modifier.padding(top = 24.dp),
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        scope.launch {
-                            showFilterBottomSheet = true
-                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.FilterList,
-                            contentDescription = "Filter",
-                            tint = colorResource(id = R.color.nav_bar_active_item)
-                        )
-                    }
-                }
-            )
-
-            // Search Bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .height(54.dp),
-                placeholder = { Text("Search doctor, specialty, hospital...") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = colorResource(id = R.color.nav_bar_active_item),
-                    unfocusedBorderColor = Color(0xFFE0E0E0),
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
-                )
-            )
-
-            // Categories Row
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .fillMaxSize()
             ) {
-                items(categoriesForRow) { category ->
-                    val isSelected = category == currentCategoryInRow
-                    Button(
-                        onClick = {
-                            if (category == "All") {
-                                selectedSpecialtiesFilter = emptySet()
-                            } else {
-                                selectedSpecialtiesFilter = setOf(category)
+                DoctorekAppBar(
+                    title = "All Doctors",
+                    modifier = Modifier.padding(top = 24.dp),
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.Rounded.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            scope.launch {
+                                showFilterBottomSheet = true
                             }
-                        },
-                        shape = RoundedCornerShape(20.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isSelected)
-                                colorResource(id = R.color.nav_bar_active_item)
-                            else
-                                Color.White,
-                            contentColor = if (isSelected)
-                                Color.White
-                            else
-                                colorResource(id = R.color.gray)
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = if (isSelected) 2.dp else 0.dp),
-                        border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null
-                    ) {
-                        Text(category, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.FilterList,
+                                contentDescription = "Filter",
+                                tint = colorResource(id = R.color.nav_bar_active_item)
+                            )
+                        }
                     }
-                }
-            }
+                )
 
-            if (doctorListState.loading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (doctorListState.error != null) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Error: ${doctorListState.error}", color = Color.Red, textAlign = TextAlign.Center)
-                }
-            } else if (filteredDoctors.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No doctors found matching your criteria.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else {
-                LazyColumn(
+                // Search Bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .height(54.dp),
+                    placeholder = { Text("Search doctor, specialty, hospital...") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorResource(id = R.color.nav_bar_active_item),
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    )
+                )
+
+                // Categories Row
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(filteredDoctors, key = { it.id }) { doctor ->
-                        DoctorListItem(doctor = doctor, onClick = {
-                            // navController.navigate(Screens.DoctorDetails.createRoute(doctor.id)) // TODO: Add DoctorDetails screen
-                            navController.navigate("doctorDetail/${doctor.id}")
-                        })
+                    items(categoriesForRow) { category ->
+                        val isSelected = category == currentCategoryInRow
+                        Button(
+                            onClick = {
+                                if (category == "All") {
+                                    selectedSpecialtiesFilter = emptySet()
+                                } else {
+                                    selectedSpecialtiesFilter = setOf(category)
+                                }
+                            },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected)
+                                    colorResource(id = R.color.nav_bar_active_item)
+                                else
+                                    Color.White,
+                                contentColor = if (isSelected)
+                                    Color.White
+                                else
+                                    colorResource(id = R.color.gray)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = if (isSelected) 2.dp else 0.dp),
+                            border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null
+                        ) {
+                            Text(category, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal)
+                        }
+                    }
+                }
+
+                if (doctorListState.loading && !isRefreshing) {  // Don't show spinner during pull refresh
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (doctorListState.error != null) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Error: ${doctorListState.error}", color = Color.Red, textAlign = TextAlign.Center)
+                    }
+                } else if (filteredDoctors.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No doctors found matching your criteria.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
+                    ) {
+                        items(filteredDoctors, key = { it.id }) { doctor ->
+                            DoctorListItem(doctor = doctor, onClick = {
+                                // navController.navigate(Screens.DoctorDetails.createRoute(doctor.id)) // TODO: Add DoctorDetails screen
+                                navController.navigate("doctorDetail/${doctor.id}")
+                            })
+                        }
                     }
                 }
             }
+            
+            // Pull-to-refresh indicator
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                backgroundColor = Color.White,
+                contentColor = colorResource(id = R.color.nav_bar_active_item)
+            )
         }
 
         if (showFilterBottomSheet) {

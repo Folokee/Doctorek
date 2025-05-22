@@ -68,13 +68,18 @@ class PatientAppointmentViewModel(application: Application) : AndroidViewModel(a
                         _state.update { 
                             it.copy(
                                 loading = false, 
-                                error = e.message ?: "Failed to load appointments"
-                            ) 
+                                error = e.message ?: "Unknown error occurred"
+                            )
                         }
                     }
                 )
             }
         }
+    }
+    
+    // Method to refresh appointments data
+    fun refreshAppointments() {
+        fetchPatientAppointments()
     }
     
     fun setFilter(filter: AppointmentFilter) {

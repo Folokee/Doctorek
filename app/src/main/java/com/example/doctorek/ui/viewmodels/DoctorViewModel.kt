@@ -90,4 +90,8 @@ class DoctorViewModel(application: Application) : AndroidViewModel(application) 
     fun clearDoctorDetail() {
         _doctorDetailState.update { DoctorDetailState() }
     }
+
+    fun refreshDoctors() {
+        fetchDoctors()
+    }
 }

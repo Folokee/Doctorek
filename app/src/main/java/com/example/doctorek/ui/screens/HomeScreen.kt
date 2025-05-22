@@ -74,10 +74,14 @@ import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.launch
 import com.example.doctorek.utils.NotificationUtils
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 
 val horizontalPadding = 16.dp
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -89,6 +93,13 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
     val mainActivity = context as? MainActivity
     val sharedPrefs = mainActivity?.sharedPrefs
+    
+    // Pull-to-refresh state
+    val isRefreshing = doctorListState.loading
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = { doctorViewModel.refreshDoctors() }
+    )
     
     // Permission request launcher
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -130,180 +141,194 @@ fun HomeScreen(
         containerColor = Color.White,
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
+                .pullRefresh(pullRefreshState)
         ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                DoctorekAppBar(
-                    title = "Doctorek",
-                    navigationIcon = {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                            contentDescription = "App Logo",
-                            modifier = Modifier.size(30.dp)
-                        )
-                    },
-                    actions = {
-                        IconButton(
-                            onClick = { 
-                                navController.navigate(Screens.FavoriteDoctors.route)
-                            },
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(colorResource(id = R.color.light_blue).copy(alpha = 0.1f))
-                                .padding(horizontal = 4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Favorite,
-                                contentDescription = "Favorite Doctors",
-                                tint = colorResource(id = R.color.nav_bar_active_item)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        IconButton(
-                            onClick = { },
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(colorResource(id = R.color.light_blue).copy(alpha = 0.1f))
-                                .padding(horizontal = 4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Notifications,
-                                contentDescription = "Notifications",
-                                tint = colorResource(id = R.color.nav_bar_active_item)
-                            )
-                        }
-                    }
-                )
-            }
-
             Column(
                 modifier = Modifier
-                    .padding(horizontal = horizontalPadding, vertical = 8.dp)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
             ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    placeholder = { Text("Search") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
-                    )
-                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    DoctorekAppBar(
+                        title = "Doctorek",
+                        navigationIcon = {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                                contentDescription = "App Logo",
+                                modifier = Modifier.size(30.dp)
+                            )
+                        },
+                        actions = {
+                            IconButton(
+                                onClick = { 
+                                    navController.navigate(Screens.FavoriteDoctors.route)
+                                },
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(colorResource(id = R.color.light_blue).copy(alpha = 0.1f))
+                                    .padding(horizontal = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = "Favorite Doctors",
+                                    tint = colorResource(id = R.color.nav_bar_active_item)
+                                )
+                            }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Special Doctor",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-
-                    Text(
-                        text = "View all",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = colorResource(id = R.color.nav_bar_active_item),
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        modifier = Modifier.clickable {
-                            navController.navigate(Screens.DoctorList.route)
+                            IconButton(
+                                onClick = { },
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(colorResource(id = R.color.light_blue).copy(alpha = 0.1f))
+                                    .padding(horizontal = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Notifications,
+                                    contentDescription = "Notifications",
+                                    tint = colorResource(id = R.color.nav_bar_active_item)
+                                )
+                            }
                         }
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    maxItemsInEachRow = 4
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = horizontalPadding, vertical = 8.dp)
                 ) {
-                    getDoctorCategories().forEach { category -> 
-                        DoctorCategoryItem(category = category) {
-                            navController.navigate(Screens.DoctorList.route + "?category=${category.name}")
-                        }
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        placeholder = { Text("Search") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Special Doctor",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+
+                        Text(
+                            text = "View all",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = colorResource(id = R.color.nav_bar_active_item),
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            modifier = Modifier.clickable {
+                                navController.navigate(Screens.DoctorList.route)
+                            }
+                        )
                     }
-                }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Top Doctors",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-
-                    Text(
-                        text = "View all",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = colorResource(id = R.color.nav_bar_active_item),
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        modifier = Modifier.clickable {
-                            navController.navigate(Screens.DoctorList.route)
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    if (doctorListState.loading) {
-                        Text("Loading doctors...")
-                    } else if (doctorListState.error != null) {
-                        Text("Error: ${doctorListState.error}")
-                    } else {
-                        val topDoctors = doctorListState.doctors
-                            .sortedByDescending { it.average_rating }
-                        topDoctors.forEach { doctor -> 
-                            DoctorCard(doctor = doctor) {
-                                // Handle doctor item click
-                                navController.navigate("doctorDetail/${doctor.id}")
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        maxItemsInEachRow = 4
+                    ) {
+                        getDoctorCategories().forEach { category -> 
+                            DoctorCategoryItem(category = category) {
+                                navController.navigate(Screens.DoctorList.route + "?category=${category.name}")
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Top Doctors",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+
+                        Text(
+                            text = "View all",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = colorResource(id = R.color.nav_bar_active_item),
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            modifier = Modifier.clickable {
+                                navController.navigate(Screens.DoctorList.route)
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        if (doctorListState.loading) {
+                            Text("Loading doctors...")
+                        } else if (doctorListState.error != null) {
+                            Text("Error: ${doctorListState.error}")
+                        } else {
+                            val topDoctors = doctorListState.doctors
+                                .sortedByDescending { it.average_rating }
+                            topDoctors.forEach { doctor -> 
+                                DoctorCard(doctor = doctor) {
+                                    // Handle doctor item click
+                                    navController.navigate("doctorDetail/${doctor.id}")
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
+            
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                backgroundColor = Color.White,
+                contentColor = colorResource(id = R.color.nav_bar_active_item)
+            )
         }
     }
 }
