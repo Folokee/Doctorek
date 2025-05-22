@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -42,6 +43,14 @@ android {
 }
 
 dependencies {
+    // added implementation : lahcen/ScreenV2
+    implementation("androidx.compose.material:material:1.6.0")
+    implementation("androidx.compose.ui:ui-text:1.6.0") // this one handles fonts
+    // Image loading (for doctor photos)
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    // Coroutines for async operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -51,6 +60,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -105,4 +115,8 @@ dependencies {
     implementation("androidx.camera:camera-view:1.3.2")
 
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
+
+
 }

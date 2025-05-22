@@ -2,6 +2,8 @@ package com.example.doctorek.data.api
 
 
 import com.example.doctorek.data.models.AppointmentModel
+import com.example.doctorek.data.models.AppointmentRequest
+import com.example.doctorek.data.models.AppointmentResponse
 import com.example.doctorek.data.models.DoctorDetailResponse
 import com.example.doctorek.data.models.DoctorProfileModel
 import com.example.doctorek.data.models.DoctorResponse
@@ -17,12 +19,16 @@ import com.example.doctorek.data.models.SignupRequest
 import com.example.doctorek.data.models.SignupResponse
 import com.example.doctorek.data.models.UpdateAppStatus
 import com.example.doctorek.data.models.UpdateProfileModel
+import com.example.doctorek.data.models.PatientAppointment
+import com.example.doctorek.data.models.DoctorAvailabilityResponse
+import com.example.doctorek.data.models.PatientPrescription
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 
@@ -41,7 +47,7 @@ interface ApiService {
         token : String,
     ): Response<ProfileResponse>
 
-    @GET("/rest/v1/doctor_profiles?select=id,specialty,hospital_name,average_rating,profiles:user_id(full_name,avatar_url)&order=average_rating.desc")
+    @GET("api/doctors/")
     suspend fun getDoctors(
         @Header("Authorization") token: String,
         @Header("apiKey") apiKey: String
@@ -117,5 +123,44 @@ interface ApiService {
     ) : Response<List<PatientModel>>
 
 
+    @GET("/api/doctors/")
+    suspend fun getDoctorById(@Query("id") doctorId: String,
+    @Header("Authorization") token: String,
+    ): Response<DoctorDetailResponse>
 
+    @GET("/api/doctors/{doctorId}/appointments/available")
+    suspend fun getAvailableSlots(
+        @Path("doctorId") doctorId: String,
+        @Query("date") date: String
+    ): Response<Map<String, List<String>>>
+
+    @POST("/api/appointments")
+    suspend fun bookAppointment(
+        @Body appointmentRequest: AppointmentRequest
+    ): Response<AppointmentResponse>
+
+    @POST("/api/appointments/")
+    suspend fun createAppointment(
+        @Body appointmentRequest: AppointmentRequest,
+        @Header("Authorization") token: String
+    ): Response<AppointmentResponse>
+
+    @GET("/api/appointments/patient_appointments/")
+    suspend fun getPatientAppointments(
+        @Query("patient_id") patientId: String,
+        @Header("Authorization") token: String
+    ): Response<List<PatientAppointment>>
+
+    @GET("/api/doctor-availability/")
+    suspend fun getDoctorAvailability(
+        @Query("doctor_id") doctorId: String,
+        @Query("date") date: String,
+        @Header("Authorization") token: String
+    ): Response<DoctorAvailabilityResponse>
+
+    @GET("/api/prescriptions/patient_prescriptions/")
+    suspend fun getPatientPrescriptions(
+        @Query("patient_id") patientId: String,
+        @Header("Authorization") token: String
+    ): Response<List<PatientPrescription>>
 }
