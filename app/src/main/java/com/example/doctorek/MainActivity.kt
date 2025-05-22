@@ -136,9 +136,7 @@ class MainActivity : ComponentActivity() {
                     PatientDetailsScreen(
                         onBackClick = { showPatientDetails.value = false },
                         onNextClick = {
-                            // Navigate to Main screen instead of trying to go to Home directly
                             navController.navigate(Screens.Main.route) {
-                                // Clear the back stack up to Main so user can't go back to booking flow
                                 popUpTo(Screens.Main.route) { inclusive = true }
                             }
                         },

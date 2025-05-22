@@ -14,6 +14,7 @@ import com.example.doctorek.data.models.SignupRequest
 import com.example.doctorek.data.models.SignupResponse
 import com.example.doctorek.data.models.PatientAppointment
 import com.example.doctorek.data.models.DoctorAvailabilityResponse
+import com.example.doctorek.data.models.PatientPrescription
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -107,4 +108,10 @@ interface ApiService {
         @Query("date") date: String,
         @Header("Authorization") token: String
     ): Response<DoctorAvailabilityResponse>
+
+    @GET("/api/prescriptions/patient_prescriptions/")
+    suspend fun getPatientPrescriptions(
+        @Query("patient_id") patientId: String,
+        @Header("Authorization") token: String
+    ): Response<List<PatientPrescription>>
 }

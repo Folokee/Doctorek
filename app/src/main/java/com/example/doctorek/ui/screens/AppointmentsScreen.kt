@@ -1,6 +1,10 @@
 package com.example.doctorek.ui.screens
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,6 +54,19 @@ import com.example.doctorek.ui.components.DoctorekAppBar
 import com.example.doctorek.ui.viewmodels.AppointmentFilter
 import com.example.doctorek.ui.viewmodels.PatientAppointmentViewModel
 import java.util.Locale
+
+private fun decodeQrCodeBase64(dataUrl: String?): Bitmap? {
+    if (dataUrl.isNullOrEmpty()) return null
+
+    try {
+        val base64Data = dataUrl.substringAfter("base64,")
+        val decodedBytes = Base64.decode(base64Data, Base64.DEFAULT)
+        return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return null
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,7 +130,6 @@ fun AppointmentsScreen(navController: NavController) {
         viewModel.searchAppointments(query)
     }
 
-    // Use temporary variables for the filter bottom sheet
     var tempSelectedSpecialties by remember(selectedSpecialties) { mutableStateOf(selectedSpecialties) }
 
     Scaffold(
@@ -141,7 +158,6 @@ fun AppointmentsScreen(navController: NavController) {
                 .background(Color.White)
                 .padding(paddingValues)
         ) {
-            // Header banner - now always visible, not scroll-dependent
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -204,7 +220,6 @@ fun AppointmentsScreen(navController: NavController) {
                 }
             }
 
-            // Search bar and other content
             OutlinedTextField(
                 value = searchText,
                 onValueChange = {
@@ -244,13 +259,11 @@ fun AppointmentsScreen(navController: NavController) {
                 )
             )
 
-            // The rest of the UI in a Column with weight to push it below the header
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
             ) {
-                // Categories Row
                 LazyRow(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -410,7 +423,6 @@ fun AppointmentsScreen(navController: NavController) {
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 24.dp)
             ) {
-                // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -440,7 +452,6 @@ fun AppointmentsScreen(navController: NavController) {
 
                 Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color(0xFFEEEEEE))
 
-                // Specialty Section only
                 Text(
                     "Doctor Specialty", 
                     fontWeight = FontWeight.Medium, 
@@ -450,7 +461,7 @@ fun AppointmentsScreen(navController: NavController) {
                 
                 Column(
                     modifier = Modifier
-                        .heightIn(max = 280.dp) // Increased height since it's the only section now
+                        .heightIn(max = 280.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
                     uniqueSpecialties.forEach { specialty ->
@@ -497,7 +508,6 @@ fun AppointmentsScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Search section - Keep the doctor name search functionality
                 Text("Doctor Name", fontWeight = FontWeight.Medium, color = colorResource(id = R.color.black))
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
@@ -514,7 +524,6 @@ fun AppointmentsScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -575,22 +584,37 @@ fun AppointmentsScreen(navController: NavController) {
                         .widthIn(min = 260.dp, max = 320.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(180.dp)
-                            .background(blueColor.copy(alpha = 0.1f), shape = RoundedCornerShape(16.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.QrCode,
-                            contentDescription = "QR Code",
-                            tint = blueColor,
-                            modifier = Modifier.size(120.dp)
-                        )
+                    val qrCodeBitmap = remember(qrDialogAppointment) {
+                        qrDialogAppointment?.qr_code?.let { decodeQrCodeBase64(it) }
                     }
+                    
+                    if (qrCodeBitmap != null) {
+                        Image(
+                            bitmap = qrCodeBitmap.asImageBitmap(),
+                            contentDescription = "Appointment QR Code",
+                            modifier = Modifier
+                                .size(180.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(180.dp)
+                                .background(blueColor.copy(alpha = 0.1f), shape = RoundedCornerShape(16.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.QrCode,
+                                contentDescription = "QR Code",
+                                tint = blueColor,
+                                modifier = Modifier.size(120.dp)
+                            )
+                        }
+                    }
+                    
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        "Scan the QR code to confirm the patient’s arrival and updates the appointment status in\nreal-time.",
+                        "Scan the QR code to confirm the patient's arrival and update the appointment status in real-time.",
                         color = colorResource(id = R.color.black),
                         fontSize = 15.sp,
                         textAlign = TextAlign.Center
@@ -636,15 +660,9 @@ fun AppointmentsScreen(navController: NavController) {
 
                     InfoRow("Doctor ID", appt.doctor_id)
                     if (appt.doctor_info != null) {
-                        if (appt.doctor_info.full_name != null) {
-                            InfoRow("Doctor Name", appt.doctor_info.full_name)
-                        }
-                        if (appt.doctor_info.speciality != null) {
-                            InfoRow("Specialty", appt.doctor_info.speciality)
-                        }
-                        if (appt.doctor_info.hospital_name != null) {
-                            InfoRow("Hospital", appt.doctor_info.hospital_name)
-                        }
+                        InfoRow("Doctor Name", appt.doctor_info.full_name)
+                        InfoRow("Specialty", appt.doctor_info.speciality)
+                        InfoRow("Hospital", appt.doctor_info.hospital_name)
                     }
                     InfoRow("Date", "${appt.appointment_date} at ${appt.appointment_time}")
                     InfoRow("Status", capitalizeStatus(appt.status))
@@ -670,7 +688,6 @@ fun AppointmentsScreen(navController: NavController) {
     }
 }
 
-// Helper function to properly capitalize status for display
 fun capitalizeStatus(status: String): String {
     return status.replaceFirstChar { 
         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() 
@@ -678,7 +695,7 @@ fun capitalizeStatus(status: String): String {
 }
 
 @Composable
-fun InfoRow(label: String, value: String) {
+fun InfoRow(label: String, value: String?) {
     Column(modifier = Modifier.padding(bottom = 8.dp)) {
         Text(
             label,
@@ -687,7 +704,7 @@ fun InfoRow(label: String, value: String) {
             color = colorResource(id = R.color.gray)
         )
         Text(
-            value,
+            value ?: "Not available",
             fontWeight = FontWeight.Normal,
             fontSize = 15.sp,
             color = colorResource(id = R.color.black)

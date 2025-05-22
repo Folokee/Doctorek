@@ -45,7 +45,7 @@ fun PatientDetailsScreen(
     onBackClick: () -> Unit,
     onNextClick: () -> Unit,
     viewModel: BookAppointmentViewModel,
-    doctorName: String = "Lahcen BENCHAREF"
+    doctorName: String = ""
 ) {
     val patientDetails by viewModel.patientDetails.collectAsStateWithLifecycle()
     val appointmentStatus by viewModel.appointmentStatus.collectAsStateWithLifecycle()
