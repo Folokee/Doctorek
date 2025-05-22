@@ -33,6 +33,7 @@ class AuthRepository(private val context : Context) {
                 sharedPrefs.saveAccess(body.data.access_token)
                 sharedPrefs.saveUserId(body.data.userId)
                 sharedPrefs.save("user_email", email)
+                sharedPrefs.saveType(body.data.user_type?: "not found")
                 Result.success(body)
             } else {
                 val errorResponse = response.body()!!.message
@@ -59,6 +60,7 @@ class AuthRepository(private val context : Context) {
                 sharedPrefs.saveAccess(body.data.access_token)
                 sharedPrefs.saveUserId(body.data.userId)
                 sharedPrefs.save("user_email", email)
+                sharedPrefs.saveType(role)
                 Result.success(body)
             } else {
                 val errorResponse = response.body()!!.message
@@ -76,6 +78,7 @@ class AuthRepository(private val context : Context) {
             val response = apiService.logout("Bearer $token")
             if (response.isSuccessful && response.body() != null){
                 val body = response.body()!!
+                sharedPrefs.clearAll()
                 Result.success(body)
             }else {
                 val errorResponse = response.errorBody()?.string() ?: "Signup failed"

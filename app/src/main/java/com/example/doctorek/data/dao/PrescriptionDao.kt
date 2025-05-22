@@ -20,9 +20,12 @@ interface PrescriptionDao {
     @Delete
     suspend fun delete(prescription: PrescriptionEntity)
 
-    @Query("SELECT * FROM prescriptions ORDER BY prescription_date DESC")
+    @Query("SELECT * FROM prescriptions ORDER BY local_id DESC")
     fun getAllPrescriptions(): Flow<List<PrescriptionEntity>>
 
     @Query("SELECT * FROM prescriptions WHERE local_id = :id")
     suspend fun getPrescriptionById(id: Long): PrescriptionEntity?
+
+    @Query("SELECT * FROM prescriptions WHERE is_synced = 0")
+    suspend fun getUnsyncedPrescriptions(): List<PrescriptionEntity>
 }

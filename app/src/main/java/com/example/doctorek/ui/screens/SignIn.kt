@@ -1,6 +1,8 @@
 package com.example.doctorek.ui.screens
 
+import android.app.Activity
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -31,9 +33,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.doctorek.AuthActivity
 import com.example.doctorek.AuthScreens
+import com.example.doctorek.DoctorActivity
 import com.example.doctorek.MainActivity
 import com.example.doctorek.R
 import com.example.doctorek.Screens
+import com.example.doctorek.data.auth.SharedPrefs
+import com.example.doctorek.data.repositories.Role
 import com.example.doctorek.ui.viewmodels.AuthViewModel
 
 @Composable
@@ -48,12 +53,22 @@ fun SignInScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     val userState = viewModel.userState.value
     val context = LocalContext.current
+    val sharedPrefs = SharedPrefs(context)
 
     LaunchedEffect(userState.isSignedIn) {
         if (userState.isSignedIn) {
-            val intent = Intent(context, MainActivity::class.java)
-            context.startActivity(intent)
-            (context as AuthActivity).finish()
+            Log.d("Repositoryhh", "hhhhh : ${sharedPrefs.getType()}")
+            if (sharedPrefs.getType() != null && sharedPrefs.getType()?.compareTo(Role.Doctor.role) == 0){
+                val intent = Intent(context, DoctorActivity::class.java)
+                context.startActivity(intent)
+                (context as AuthActivity).finish()
+            } else if (sharedPrefs.getType() != null && sharedPrefs.getType()?.compareTo(
+                    Role.Patient.role) == 0){
+                val intent = Intent(context, MainActivity::class.java)
+                context.startActivity(intent)
+                (context as AuthActivity).finish()
+            }
+
         }
     }
 

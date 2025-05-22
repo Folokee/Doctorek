@@ -14,7 +14,8 @@ data class SigninResponse(
 data class userData(
     val access_token: String,
     val refresh_token: String,
-    val userId: String
+    val userId: String,
+    val user_type: String?,
 )
 data class SignupResponse(
     val success : Boolean,

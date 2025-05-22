@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.doctorek.data.auth.SharedPrefs
+import com.example.doctorek.data.models.ContactInfo
 import com.example.doctorek.data.models.ProfileModel
 import com.example.doctorek.data.repositories.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,7 +72,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun updateProfile(
-        email: String,
         phone_number: String,
         full_name: String,
         address: String,
@@ -83,25 +83,64 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     loading = true
                 )
             }
-            val profile = ProfileModel(
-                email = email,
-                phone_number = phone_number,
-                full_name = full_name,
-                address = address,
-                avatar_url = avatar_url
-            )
             val response = repository.updateProfile(
-                email,
                 phone_number,
                 full_name,
                 address,
                 avatar_url
             )
             if (response.isSuccess) {
+                val profile = ProfileModel(
+                    phone_number = phone_number,
+                    full_name = full_name,
+                    address = address,
+                    avatar_url = avatar_url
+                )
                 _profileState.update{
                     it.copy(
                         loading = false,
                         profile = profile,
+                        success = true
+                    )
+                }
+            } else {
+                _profileState.update{
+                    it.copy(
+                        loading = false,
+                        errorMessage = response.exceptionOrNull()?.message
+                            ?: "Failed to update profile"
+                    )
+                }
+            }
+        }
+    }
+
+    fun createDoctorDetails(
+        specialty: String,
+        hospital_name: String,
+        hospital_address: String,
+        bio: String,
+        years_of_experience: Int,
+        contact_information: ContactInfo
+    ) {
+        viewModelScope.launch {
+            _profileState.update{
+                it.copy(
+                    loading = true
+                )
+            }
+            val response = repository.addDoctorDetails(
+                specialty,
+                hospital_name,
+                hospital_address,
+                bio,
+                years_of_experience,
+                contact_information
+            )
+            if (response.isSuccess) {
+                _profileState.update{
+                    it.copy(
+                        loading = false,
                         success = true
                     )
                 }

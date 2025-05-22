@@ -206,7 +206,6 @@ fun ProfileDetailsScreen(
             Button(
                 onClick = {
                     viewModel.updateProfile(
-                        email = email!!,
                         phone_number = phone!!,
                         full_name = fullName!!,
                         address = address!!,

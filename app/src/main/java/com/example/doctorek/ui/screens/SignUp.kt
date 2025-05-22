@@ -4,6 +4,7 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -32,9 +33,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.doctorek.AuthActivity
 import com.example.doctorek.AuthScreens
+import com.example.doctorek.DScreens
+import com.example.doctorek.DoctorActivity
 import com.example.doctorek.MainActivity
 import com.example.doctorek.R
 import com.example.doctorek.Screens
+import com.example.doctorek.data.auth.SharedPrefs
+import com.example.doctorek.data.repositories.Role
 import com.example.doctorek.ui.components.LoadingSplash
 import com.example.doctorek.ui.viewmodels.AuthViewModel
 
@@ -48,12 +53,19 @@ fun SignUpScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var isDoctorRole by remember { mutableStateOf(false) }
     val userState = viewModel.userState.value
     val context = LocalContext.current
+    val sharedPrefs = SharedPrefs(context)
 
     LaunchedEffect(userState.isSignedIn) {
         if (userState.isSignedIn){
-            navController.navigate(AuthScreens.ProfileDetails.route)
+            if (sharedPrefs.getType() != null && sharedPrefs.getType()?.compareTo(Role.Doctor.role) == 0){
+                navController.navigate(AuthScreens.DoctorDetails.route)
+            } else if (sharedPrefs.getType() != null && sharedPrefs.getType()?.compareTo(
+                    Role.Patient.role) == 0){
+                navController.navigate(AuthScreens.ProfileDetails.route)
+            }
             Toast.makeText(context,"Account created successfully, you can now login", Toast.LENGTH_SHORT).show()
         }
     }
@@ -107,6 +119,72 @@ fun SignUpScreen(
         }
 
         Spacer(modifier = Modifier.height(40.dp))
+
+        // Role Selection Switch
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = colorResource(id = R.color.light_blue).copy(alpha = 0.2f)
+                ),
+                elevation = CardDefaults.cardElevation(0.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(
+                                if (!isDoctorRole)
+                                    colorResource(id = R.color.blue)
+                                else
+                                    Color.Transparent,
+                                RoundedCornerShape(28.dp)
+                            )
+                            .clickable { isDoctorRole = false },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Patient",
+                            fontWeight = FontWeight.Medium,
+                            color = if (!isDoctorRole) Color.White else Color.Gray
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(
+                                if (isDoctorRole)
+                                    colorResource(id = R.color.blue)
+                                else
+                                    Color.Transparent,
+                                RoundedCornerShape(28.dp)
+                            )
+                            .clickable { isDoctorRole = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Doctor",
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDoctorRole) Color.White else Color.Gray
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -176,9 +254,11 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+
         Button(
             onClick = {
-                viewModel.signUp(email, password, "patient")
+                val role = if (isDoctorRole) "doctor" else "patient"
+                viewModel.signUp(email, password, role)
             },
             modifier = Modifier
                 .fillMaxWidth()

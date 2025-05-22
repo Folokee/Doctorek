@@ -28,6 +28,19 @@ class SharedPrefs(private val context: Context){
     fun getUserId(): String? {
         return sharedPreferences.getString("user_id", null)
     }
+    fun saveType(value: String) {
+        sharedPreferences.edit() { putString("user_type", value) }
+    }
+    fun getType(): String? {
+        return sharedPreferences.getString("user_type", null)
+    }
+
+    fun saveName(value: String) {
+        sharedPreferences.edit() { putString("user_name", value) }
+    }
+    fun getName(): String? {
+        return sharedPreferences.getString("user_name", null)
+    }
 
     fun save(key : String, value : String){
         sharedPreferences.edit() { putString(key, value) }

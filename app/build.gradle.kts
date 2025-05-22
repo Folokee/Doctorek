@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.doctorek"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -91,4 +91,18 @@ dependencies {
 
 
     implementation(libs.androidx.material.icons.extended)
+
+    // CameraX core library
+    implementation("androidx.camera:camera-core:1.3.2")
+
+    // CameraX Camera2 implementation
+    implementation("androidx.camera:camera-camera2:1.3.2")
+
+    // CameraX Lifecycle library
+    implementation("androidx.camera:camera-lifecycle:1.3.2")
+
+    // CameraX View class for the camera preview
+    implementation("androidx.camera:camera-view:1.3.2")
+
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
 }

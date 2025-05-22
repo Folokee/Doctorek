@@ -1,15 +1,22 @@
 package com.example.doctorek.data.api
 
 
+import com.example.doctorek.data.models.AppointmentModel
 import com.example.doctorek.data.models.DoctorDetailResponse
+import com.example.doctorek.data.models.DoctorProfileModel
 import com.example.doctorek.data.models.DoctorResponse
+import com.example.doctorek.data.models.PatientModel
+import com.example.doctorek.data.models.PrescriptionModel
 import com.example.doctorek.data.models.ProfileModel
 import com.example.doctorek.data.models.ProfileResponse
 import com.example.doctorek.data.models.ResponseModel
+import com.example.doctorek.data.models.SavePrescriptionModel
 import com.example.doctorek.data.models.SigninRequest
 import com.example.doctorek.data.models.SigninResponse
 import com.example.doctorek.data.models.SignupRequest
 import com.example.doctorek.data.models.SignupResponse
+import com.example.doctorek.data.models.UpdateAppStatus
+import com.example.doctorek.data.models.UpdateProfileModel
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -23,7 +30,7 @@ interface ApiService {
     @PATCH("/api/profile/")
     suspend fun updateProfile(
         @Body
-        profile: ProfileModel,
+        profile: UpdateProfileModel,
         @Header("Authorization")
         token : String,
     ): Response<ResponseModel>
@@ -55,7 +62,7 @@ interface ApiService {
         request : SignupRequest
     ) : Response<SignupResponse>
 
-    @POST("/api/signin/")
+    @POST("/api/login/")
     suspend fun signIn(
         @Body
         request : SigninRequest
@@ -66,6 +73,48 @@ interface ApiService {
         @Header("Authorization")
         token : String,
     ) : Response<Any>
+
+    @POST("/api/doctors/")
+    suspend fun createDoctorProfile(
+        @Header("Authorization")
+        token : String,
+        @Body
+        doctorProfile: DoctorProfileModel
+    ) : Response<Any>
+
+    @GET("/api/doctor-appointments/")
+    suspend fun getDoctorAppointments(
+        @Header("Authorization")
+        token : String,
+    ) : Response<List<AppointmentModel>>
+
+    @PATCH("/api/doctor-appointments/")
+    suspend fun updateAppointmentStatus(
+        @Header("Authorization")
+        token : String,
+        @Body
+        newStatus : UpdateAppStatus
+    ) : Response<Any>
+
+    @GET("/api/doctor/prescriptions/")
+    suspend fun getPrescriptions(
+        @Header("Authorization")
+        token : String
+    ) : Response<List<PrescriptionModel>>
+
+    @POST("/api/prescriptions/")
+    suspend fun createPrescription(
+        @Header("Authorization")
+        token : String,
+        @Body
+        prescription: SavePrescriptionModel
+    ) : Response<Any>
+
+    @GET("/api/patients/")
+    suspend fun getPatients(
+        @Header("Authorization")
+        token : String,
+    ) : Response<List<PatientModel>>
 
 
 
