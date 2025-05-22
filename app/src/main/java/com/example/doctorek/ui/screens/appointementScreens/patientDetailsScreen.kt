@@ -32,8 +32,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.doctorek.data.models.AgeRanges
-import com.example.doctorek.data.models.GenderOptions
 import com.example.doctorek.ui.components.AppointmentFailureModal
 import com.example.doctorek.ui.components.AppointmentSuccessModal
 import com.example.doctorek.ui.viewmodels.BookAppointmentViewModel
@@ -47,53 +45,48 @@ fun PatientDetailsScreen(
     onBackClick: () -> Unit,
     onNextClick: () -> Unit,
     viewModel: BookAppointmentViewModel,
-    doctorName:String="Lahcen BENCHAREF"
+    doctorName: String = "Lahcen BENCHAREF"
 ) {
     val patientDetails by viewModel.patientDetails.collectAsStateWithLifecycle()
-    val selectedAgeRangeIndex by viewModel.selectedAgeRangeIndex.collectAsStateWithLifecycle()
     val appointmentStatus by viewModel.appointmentStatus.collectAsStateWithLifecycle()
+    
+    // Dialog states
     when (appointmentStatus) {
         is BookAppointmentViewModel.AppointmentStatus.Success -> {
-            // Using your existing AppointmentSuccessModal with proper callbacks
             AppointmentSuccessModal(
                 doctorName = doctorName,
                 onDismiss = {
-                    // Reset the state in ViewModel when dismissing
                     viewModel.resetAppointmentStatus()
                 },
                 onBackToHome = {
                     viewModel.resetAppointmentStatus()
-                    onBackClick()
+                    onNextClick() // This will trigger navigation to Main screen
                 }
             )
         }
         is BookAppointmentViewModel.AppointmentStatus.Failure -> {
-            // Using your ErrorModal component with proper callbacks
             AppointmentFailureModal(
                 doctorName = doctorName,
                 onDismiss = {
-                    // Reset the state in ViewModel when dismissing
                     viewModel.resetAppointmentStatus()
                 },
                 onTryAgain = {
-                    // Reset the state and potentially retry the submission
                     viewModel.resetAppointmentStatus()
-                    // Optionally retry submission
-                    // viewModel.submitAppointment("current_user")
+                    onBackClick() // Go back to fix issues
                 }
             )
         }
-
         else -> {
             // No dialog to show
         }
     }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Patient Details",
+                        text = "Appointment Details",
                         fontFamily = sourceSansPro,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 18.sp
@@ -104,10 +97,9 @@ fun PatientDetailsScreen(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color(0xFF2972FE) // custom arrow color
+                            tint = Color(0xFF2972FE)
                         )
                     }
-
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.White,
@@ -124,74 +116,13 @@ fun PatientDetailsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Full Name Field
-            FormLabel(text = "Full Name")
-
-            OutlinedTextField(
-                value = patientDetails.fullName,
-                onValueChange = { viewModel.updateFullName(it) },
-                placeholder = { Text("Full Name") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color(0xFF3E7BFA),
-                    unfocusedBorderColor = Color(0xFFE5E7EB)
-                ),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Age Range Selection
-            FormLabel(text = "Select your age Range")
-
-            AgeRangeSelector(
-                selectedIndex = selectedAgeRangeIndex,
-                onAgeRangeSelected = { viewModel.selectAgeRange(it) }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Phone Number Field
-            FormLabel(text = "Phone Number")
-
-            OutlinedTextField(
-                value = patientDetails.phoneNumber,
-                onValueChange = { viewModel.updatePhoneNumber(it) },
-                placeholder = { Text("Email") }, // This should be "Phone" but matching the image
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color(0xFF3E7BFA),
-                    unfocusedBorderColor = Color(0xFFE5E7EB)
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Gender Selection
-            FormLabel(text = "Gender")
-
-            GenderDropdown(
-                selectedGender = patientDetails.gender,
-                onGenderSelected = { viewModel.updateGender(it) }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Problem Description
-            FormLabel(text = "Write Your Problem")
+            FormLabel(text = "Reason for Visit")
 
             OutlinedTextField(
                 value = patientDetails.problem,
                 onValueChange = { viewModel.updateProblem(it) },
-                placeholder = { Text("Tell Doctor About Your Problem") },
+                placeholder = { Text("Describe your symptoms or reason for visit") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(160.dp)
@@ -201,15 +132,42 @@ fun PatientDetailsScreen(
                     focusedBorderColor = Color(0xFF3E7BFA),
                     unfocusedBorderColor = Color(0xFFE5E7EB)
                 ),
-
                 maxLines = 5
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Additional Notes
+            FormLabel(text = "Additional Notes")
+
+            OutlinedTextField(
+                value = patientDetails.additionalNotes ?: "",
+                onValueChange = { viewModel.updateAdditionalNotes(it) },
+                placeholder = { Text("Add any additional information for the doctor") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFF3E7BFA),
+                    unfocusedBorderColor = Color(0xFFE5E7EB)
+                ),
+                maxLines = 3
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Next Button
+            // Book Appointment Button
             Button(
-                onClick = onNextClick,
+                onClick = {
+                    val userId = "current_user_id" // In a real app, get from SharedPrefs
+                    viewModel.submitAppointment(
+                        patientId = userId,
+                        onSuccess = { /* Success will show modal */ },
+                        onError = { /* Handle error */ }
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -219,7 +177,7 @@ fun PatientDetailsScreen(
                 )
             ) {
                 Text(
-                    text = "Next",
+                    text = "Book Appointment",
                     fontFamily = sourceSansPro,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
@@ -242,124 +200,3 @@ fun FormLabel(text: String) {
         modifier = Modifier.padding(vertical = 4.dp)
     )
 }
-
-@Composable
-fun AgeRangeSelector(
-    selectedIndex: Int?,
-    onAgeRangeSelected: (Int) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        AgeRanges.ranges.forEachIndexed { index, range ->
-            val isSelected = selectedIndex == index
-            AgeRangeButton(
-                range = range,
-                isSelected = isSelected,
-                onClick = { onAgeRangeSelected(index) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-fun AgeRangeButton(
-    range: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .height(48.dp)
-            .border(
-                width = 2.dp,
-                color = if (isSelected) Color(0xFF2972FE) else Color(0xFFD1D5DB),
-                shape = RoundedCornerShape(24.dp)
-            )
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = range,
-            fontFamily = sourceSansPro,
-            fontWeight = FontWeight.Bold,
-            color = if (isSelected) Color(0xFF3E7BFA) else Color.Gray,
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun GenderDropdown(
-    selectedGender: String,
-    onGenderSelected: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        OutlinedTextField(
-            value = selectedGender,
-            onValueChange = {},
-            readOnly = true,
-            placeholder = { Text("Email") }, // Matching the image, though odd placeholder
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Select Gender"
-                )
-            },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color(0xFF3E7BFA),
-                unfocusedBorderColor = Color(0xFFE5E7EB)
-            ),
-            singleLine = true
-        )
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            GenderOptions.options.forEach { gender ->
-                DropdownMenuItem(
-                    text = { Text(gender) },
-                    onClick = {
-                        onGenderSelected(gender)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-// Preview function for testing
-/*@SuppressLint("ViewModelConstructorInComposable")
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun PatientDetailsScreenPreview() {
-    // Create a mock ViewModel for preview
-    val mockViewModel = BookAppointmentViewModel(doctorId = "1", selectedDate = LocalDate.now(), repository = AppointmentRepository())
-
-    TDM_PROJECTTheme {
-        AppointmentFailureModal(doctorName = "lahcen BENCHAREF", onDismiss = {}, onTryAgain = {})
-    }
-}
-*/

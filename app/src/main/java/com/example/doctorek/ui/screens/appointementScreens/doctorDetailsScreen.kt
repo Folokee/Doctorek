@@ -398,9 +398,14 @@ fun SocialMediaSection(contactInfo: ContactInformation?) {
         return
     }
     
+    // Function to safely check if a link is valid and not empty
+    fun isValidLink(url: String?): Boolean {
+        return url != null && url.isNotBlank()
+    }
+    
     // Function to open URLs
-    fun openUrl(url: String) {
-        if (url.isNotBlank()) {
+    fun openUrl(url: String?) {
+        if (url != null && url.isNotBlank()) {
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 context.startActivity(intent)
@@ -412,45 +417,51 @@ fun SocialMediaSection(contactInfo: ContactInformation?) {
         }
     }
     
+    // Check if at least one social media link exists
+    val hasFacebook = isValidLink(contactInfo.facebook_link)
+    val hasWhatsapp = isValidLink(contactInfo.whatsapp_link)
+    val hasLinkedIn = isValidLink(contactInfo.linkedin_link)
+    
+    // If no social media links, don't show the section at all
+    if (!hasFacebook && !hasWhatsapp && !hasLinkedIn) {
+        return
+    }
+    
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Facebook (clickable if link exists)
-        Box(
-            modifier = Modifier
-                .clickable(
-                    enabled = contactInfo.facebook_link.isNotBlank(),
-                    onClick = { openUrl(contactInfo.facebook_link) }
-                )
-        ) {
-            CustomImage(R.drawable.facebook, 40.dp)
+        if (hasFacebook) {
+            Box(
+                modifier = Modifier
+                    .clickable { openUrl(contactInfo.facebook_link) }
+            ) {
+                CustomImage(R.drawable.facebook, 40.dp)
+            }
+            Spacer(modifier = Modifier.width(20.dp))
         }
-
-        Spacer(modifier = Modifier.width(20.dp))
+        
         // WhatsApp (clickable if link exists)
-        Box(
-            modifier = Modifier
-                .clickable(
-                    enabled = contactInfo.whatsapp_link.isNotBlank(),
-                    onClick = { openUrl(contactInfo.whatsapp_link) }
-                )
-        ) {
-            CustomImage(R.drawable.whatsapp, 40.dp)
+        if (hasWhatsapp) {
+            Box(
+                modifier = Modifier
+                    .clickable { openUrl(contactInfo.whatsapp_link) }
+            ) {
+                CustomImage(R.drawable.whatsapp, 40.dp)
+            }
+            Spacer(modifier = Modifier.width(20.dp))
         }
-
-        Spacer(modifier = Modifier.width(20.dp))
 
         // LinkedIn (clickable if link exists)
-        Box(
-            modifier = Modifier
-                .clickable(
-                    enabled = contactInfo.linkedin_link.isNotBlank(),
-                    onClick = { openUrl(contactInfo.linkedin_link) }
-                )
-        ) {
-            CustomImage(R.drawable.linkedin, 40.dp)
+        if (hasLinkedIn) {
+            Box(
+                modifier = Modifier
+                    .clickable { openUrl(contactInfo.linkedin_link) }
+            ) {
+                CustomImage(R.drawable.linkedin, 40.dp)
+            }
         }
     }
 }
@@ -503,21 +514,27 @@ fun AboutDoctorSection(doctorDetail: DoctorDetailResponse, fontFamily: FontFamil
         doctorDetail.contact_information?.let { contactInfo ->
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Phone number: ${contactInfo.phone}",
-                fontFamily = fontFamily,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp
-            )
+            // Only show phone if available
+            contactInfo.phone?.let { phone ->
+                Text(
+                    text = "Phone number: $phone",
+                    fontFamily = fontFamily,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+            }
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "Email: ${contactInfo.email}",
-                fontFamily = fontFamily,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp
-            )
+            // Only show email if available
+            contactInfo.email?.let { email ->
+                Text(
+                    text = "Email: $email",
+                    fontFamily = fontFamily,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                )
+            }
         }
     }
 }
@@ -534,7 +551,7 @@ fun WorkingTimeSection(doctorDetail: DoctorDetailResponse, fontFamily: FontFamil
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Safely get office hours, show "Not available" if contact info is null
+        // Safely get office hours, show "Not available" if office_hours is null
         Text(
             text = doctorDetail.contact_information?.office_hours ?: "Not available",
             fontFamily = fontFamily,
@@ -841,8 +858,8 @@ fun generateWeekDays(startDate: LocalDate): List<DayInfo> {
 
 // Parse office hours to extract workdays
 @RequiresApi(Build.VERSION_CODES.O)
-fun parseWorkdays(officeHours: String): List<String> {
-    if (officeHours.isBlank()) return emptyList()
+fun parseWorkdays(officeHours: String?): List<String> {
+    if (officeHours.isNullOrBlank()) return emptyList()
     
     // Handle common formats like "Monday-Friday 9AM-5PM"
     val allDays = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")

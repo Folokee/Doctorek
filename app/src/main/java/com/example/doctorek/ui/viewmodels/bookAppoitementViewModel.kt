@@ -1,12 +1,12 @@
 package com.example.doctorek.ui.viewmodels
 
 
+import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.doctorek.data.models.AgeRanges
 import com.example.doctorek.data.models.AppointmentRequest
 import com.example.doctorek.data.models.PatientDetails
 import com.example.doctorek.data.models.TimePeriod
@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 open class BookAppointmentViewModel(
@@ -48,13 +49,10 @@ open class BookAppointmentViewModel(
         object Success : AppointmentStatus()
         object Failure : AppointmentStatus()
     }
-    // New state for patient details
+    // New state for patient details - simplified
     private val _patientDetails = MutableStateFlow(PatientDetails())
     val patientDetails: StateFlow<PatientDetails> = _patientDetails
 
-    // Selected age range index
-    private val _selectedAgeRangeIndex = MutableStateFlow<Int?>(null)
-    val selectedAgeRangeIndex: StateFlow<Int?> = _selectedAgeRangeIndex
     @RequiresApi(Build.VERSION_CODES.O)
     val state: StateFlow<BookAppointmentState> = _state
 
@@ -69,27 +67,26 @@ open class BookAppointmentViewModel(
 
         viewModelScope.launch {
             try {
-                // For development, use mock data
-                val timeSections = repository.getMockTimeSlots()
+                // For production use real API data
+                val result = repository.getAvailableTimeSlots(doctorId, state.value.date)
+                result.onSuccess { timeSections ->
+                    _state.update { it.copy(
+                        isLoading = false,
+                        availableTimeSections = timeSections
+                    )}
+                }.onFailure { error ->
+                    _state.update { it.copy(
+                        isLoading = false,
+                        error = error.message
+                    )}
+                }
 
-                // For production, uncomment this
-                // val result = repository.getAvailableTimeSlots(doctorId, state.value.date)
-                // result.onSuccess { timeSections ->
-                //    _state.update { it.copy(
-                //        isLoading = false,
-                //        availableTimeSections = timeSections
-                //    )}
-                // }.onFailure { error ->
-                //    _state.update { it.copy(
-                //        isLoading = false,
-                //        error = error.message
-                //    )}
-                // }
-
-                _state.update { it.copy(
-                    isLoading = false,
-                    availableTimeSections = timeSections
-                )}
+                // Comment this out when using real API
+                // val timeSections = repository.getMockTimeSlots()
+                // _state.update { it.copy(
+                //     isLoading = false,
+                //     availableTimeSections = timeSections
+                // )}
             } catch (e: Exception) {
                 _state.update { it.copy(
                     isLoading = false,
@@ -103,35 +100,20 @@ open class BookAppointmentViewModel(
     fun resetAppointmentStatus() {
         _appointmentStatus.value = AppointmentStatus.Initial
     }
-    // New functions for patient details form
-    fun updateFullName(name: String) {
-        _patientDetails.update { it.copy(fullName = name) }
-    }
-
-    fun selectAgeRange(index: Int) {
-        _selectedAgeRangeIndex.value = index
-        _patientDetails.update { it.copy(ageRange = AgeRanges.ranges[index]) }
-    }
-
-    fun updatePhoneNumber(phone: String) {
-        _patientDetails.update { it.copy(phoneNumber = phone) }
-    }
-
-    fun updateGender(gender: String) {
-        _patientDetails.update { it.copy(gender = gender) }
-    }
-
+    // Update functions for the simplified form
     fun updateProblem(problem: String) {
         _patientDetails.update { it.copy(problem = problem) }
     }
 
-    fun validatePatientDetails(): Boolean {
-        val currentDetails = _patientDetails.value
-        return currentDetails.fullName.isNotBlank() &&
-                currentDetails.ageRange.isNotBlank() &&
-                currentDetails.phoneNumber.isNotBlank() &&
-                currentDetails.gender.isNotBlank()
+    fun updateAdditionalNotes(notes: String) {
+        _patientDetails.update { it.copy(additionalNotes = notes) }
     }
+
+    fun validatePatientDetails(): Boolean {
+        // Only validate that problem is not empty
+        return _patientDetails.value.problem.isNotBlank()
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun selectTimePeriod(period: TimePeriod) {
         _state.update { it.copy(selectedTimePeriod = period) }
@@ -156,62 +138,57 @@ open class BookAppointmentViewModel(
 
         // Validate patient details
         if (!validatePatientDetails()) {
-            onError("Please fill in all required fields")
+            onError("Please provide a reason for your visit")
             return
         }
 
         _state.update { it.copy(isLoading = true) }
+        _isSubmitting.value = true
 
         viewModelScope.launch {
-            val request = AppointmentRequest(
-                doctorId = currentState.doctorId,
-                patientId = patientId,
-                date = currentState.date,
-                time = selectedTime,
-                patientDetails = currentDetails
-            )
+            try {
+                // Calculate end time (assuming 1-hour appointments)
+                val startTimeStr = selectedTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+                val endTimeStr = selectedTime.plusHours(1).format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+                
+                // Format the date
+                val dateStr = currentState.date.toString()
+                
+                // Create appointment request with the new format
+                val request = AppointmentRequest(
+                    doctor_id = currentState.doctorId,
+                    appointment_date = dateStr,
+                    start_time = startTimeStr,
+                    end_time = endTimeStr,
+                    reason = currentDetails.problem,
+                    notes = currentDetails.additionalNotes ?: ""
+                )
 
-            // For development, mock success or failure
-//            delay(1500) // Simulate network delay
-
-            // Uncomment one of these for testing
-            _appointmentStatus.value = AppointmentStatus.Success
-            // _appointmentStatus.value = AppointmentStatus.Failure
-
-            _isSubmitting.value = false
-
-            // For production:
-            /*
-            repository.bookAppointment(request)
-                .onSuccess {
-                    _appointmentStatus.value = AppointmentStatus.Success
-                    _isSubmitting.value = false
-                }
-                .onFailure { error ->
-                    _appointmentStatus.value = AppointmentStatus.Failure
-                    _isSubmitting.value = false
-                }
-            */
-
-            // For development, mock success
-            _state.update { it.copy(isLoading = false) }
-            onSuccess()
-
-            // For production, uncomment this
-
-            repository.bookAppointment(request)
-                .onSuccess {
-                    _state.update { it.copy(isLoading = false) }
-                    onSuccess()
-                }
-                .onFailure { error ->
-                    _state.update { it.copy(
-                        isLoading = false,
-                        error = error.message
-                    )}
-                    onError(error.message ?: "Failed to book appointment")
-                }
-
+                repository.createAppointment(request)
+                    .onSuccess {
+                        _appointmentStatus.value = AppointmentStatus.Success
+                        _isSubmitting.value = false
+                        _state.update { it.copy(isLoading = false) }
+                        // Don't call onSuccess here, let the UI observe the state change
+                    }
+                    .onFailure { error ->
+                        _appointmentStatus.value = AppointmentStatus.Failure
+                        _isSubmitting.value = false
+                        _state.update { it.copy(
+                            isLoading = false,
+                            error = error.message
+                        )}
+                        onError(error.message ?: "Failed to book appointment")
+                    }
+            } catch (e: Exception) {
+                _appointmentStatus.value = AppointmentStatus.Failure
+                _isSubmitting.value = false
+                _state.update { it.copy(
+                    isLoading = false,
+                    error = e.message
+                )}
+                onError(e.message ?: "An unexpected error occurred")
+            }
         }
     }
 
@@ -226,6 +203,20 @@ open class BookAppointmentViewModel(
                 return BookAppointmentViewModel(doctorId, selectedDate, repository) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
+        }
+
+        companion object {
+            fun create(
+                doctorId: String,
+                selectedDate: LocalDate,
+                context: Context
+            ): Factory {
+                return Factory(
+                    doctorId,
+                    selectedDate,
+                    AppointmentRepository(context)
+                )
+            }
         }
     }
 }

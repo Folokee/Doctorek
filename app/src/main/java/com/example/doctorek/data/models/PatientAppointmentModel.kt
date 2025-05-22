@@ -13,6 +13,7 @@ data class PatientAppointment(
     val reason: String?,
     val notes: String?,
     val qr_code: String?,
+    val price: Double? = null, // Added price field with default null
     val created_at: String,
     val updated_at: String,
     val doctor_info: DoctorInfo? = null

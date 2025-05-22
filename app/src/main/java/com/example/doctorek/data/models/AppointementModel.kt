@@ -1,6 +1,5 @@
 package com.example.doctorek.data.models
 
-
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -19,10 +18,16 @@ enum class TimePeriod {
 }
 
 data class AppointmentRequest(
-    val doctorId: String,
-    val patientId: String,
-    val date: LocalDate,
-    val time: LocalTime,
+    val doctor_id: String,
+    val appointment_date: String,
+    val start_time: String,
+    val end_time: String,
+    val reason: String,
+    val notes: String = "",
+    // Keep the following fields for compatibility with existing code
+    val patientId: String? = null,
+    val date: LocalDate? = null,
+    val time: LocalTime? = null,
     val patientDetails: PatientDetails? = null
 )
 

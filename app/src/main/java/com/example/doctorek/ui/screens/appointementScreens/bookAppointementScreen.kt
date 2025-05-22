@@ -1,4 +1,5 @@
 package com.example.doctorek.ui.screens.appointementScreens
+
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.DrawableRes
@@ -18,8 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,10 +47,10 @@ fun BookAppointmentScreen(
     onBackClick: () -> Unit,
     onNextClick: () -> Unit,
     viewModel: BookAppointmentViewModel = viewModel(
-        factory = BookAppointmentViewModel.Factory(
+        factory = BookAppointmentViewModel.Factory.create(
             doctorId = doctorId,
             selectedDate = selectedDate,
-            repository = AppointmentRepository()
+            context = LocalContext.current
         )
     )
 ) {
@@ -146,14 +149,7 @@ fun BookAppointmentScreen(
 
                     // Next button
                     Button(
-                        onClick = {
-                            // In a real app, you'd use the patientId from user session
-                            viewModel.submitAppointment(
-                                patientId = "current_user_id",
-                                onSuccess = onNextClick,
-                                onError = { /* Show error message */ }
-                            )
-                        },
+                        onClick = onNextClick,  // Changed to directly use onNextClick for navigation
                         enabled = state.selectedTime != null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -279,6 +275,24 @@ fun TimeSlotGrid(
     selectedTime: LocalTime?,
     onTimeSelected: (LocalTime) -> Unit
 ) {
+    if (slots.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No available time slots",
+                fontFamily = sourceSansPro,
+                fontSize = 16.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+        }
+        return
+    }
+    
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -370,18 +384,18 @@ fun TimeSlotButton(
 @Preview(showBackground = true)
 @Composable
 fun BookAppointmentScreenPreview() {
+    val context = LocalContext.current
     val mockViewModel = BookAppointmentViewModel(
         doctorId = "doctor_123",
         selectedDate = LocalDate.now(),
-        repository = AppointmentRepository()
+        repository = AppointmentRepository(context)
     )
 
-
-        BookAppointmentScreen(
-            doctorId = "doctor_123",
-            selectedDate = LocalDate.now(),
-            onBackClick = {},
-            onNextClick = {},
-            viewModel = mockViewModel
-        )
+    BookAppointmentScreen(
+        doctorId = "doctor_123",
+        selectedDate = LocalDate.now(),
+        onBackClick = {},
+        onNextClick = {},
+        viewModel = mockViewModel
+    )
 }

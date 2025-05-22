@@ -124,7 +124,9 @@ class MainActivity : ComponentActivity() {
                     factory = BookAppointmentViewModel.Factory(
                         doctorId = doctorId,
                         selectedDate = selectedDate,
-                        repository = AppointmentRepository()
+                        repository = AppointmentRepository(
+                            context = applicationContext
+                        )
                     )
                 )
 
@@ -134,8 +136,10 @@ class MainActivity : ComponentActivity() {
                     PatientDetailsScreen(
                         onBackClick = { showPatientDetails.value = false },
                         onNextClick = {
-                            navController.navigate(Screens.Home.route) {
-                                popUpTo(Screens.Main.route) { inclusive = false }
+                            // Navigate to Main screen instead of trying to go to Home directly
+                            navController.navigate(Screens.Main.route) {
+                                // Clear the back stack up to Main so user can't go back to booking flow
+                                popUpTo(Screens.Main.route) { inclusive = true }
                             }
                         },
                         viewModel = viewModel
@@ -150,26 +154,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-            // Appointment Confirmation Screen (if needed)
-            composable(
-                route = "appointmentConfirmation/{doctorId}",
-                arguments = listOf(navArgument("doctorId") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
-                AppointmentSuccessScreen(
-                    onBackToHome = {
-                        navController.navigate(Screens.Main.route) {
-                            popUpTo(Screens.Main.route) { inclusive = true }
-                        }
-                    }
-                )
-            }
-            }
-    }
-
-    private @Composable
-    fun AppointmentSuccessScreen(onBackToHome: () -> Unit) {
-
+        }
     }
 }
 

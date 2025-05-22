@@ -28,14 +28,22 @@ data class DoctorDetailResponse(
     val profiles: DoctorProfileInfo,
     val created_at: String,
     val updated_at: String,
-    val doctor_availability: List<DoctorAvailability> = emptyList() // Added doctor availability
+    val availability: List<DoctorAvailability> = emptyList() // Changed from doctor_availability to availability
 )
 
 data class ContactInformation(
-    val email: String,
-    val phone: String,
-    val office_hours: String,
-    val facebook_link: String,
-    val linkedin_link: String,
-    val whatsapp_link: String
+    val email: String? = null,
+    val phone: String? = null,
+    val office_hours: String? = null,
+    val facebook_link: String? = null,
+    val linkedin_link: String? = null,
+    val whatsapp_link: String? = null
+)
+
+data class DoctorAvailability(
+    val day_of_week: String,
+    val start_time: String,
+    val end_time: String,
+    val slot_duration: Int,
+    val is_available: Boolean
 )

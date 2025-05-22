@@ -84,7 +84,7 @@ fun AppointmentFailureModal(
 
                 // Error message
                 Text(
-                    text = "You appointment booking successfully completed . $doctorName will Message you soon",
+                    text = "Your appointment booking failed. Please try again or contact support if the problem persists.",
                     fontFamily = sourceSansPro,
                     fontSize = 16.sp,
                     color = Color.Black.copy(alpha = 0.7f),

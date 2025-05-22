@@ -42,7 +42,7 @@ class DoctorDetailViewModel(
             doctorRepository.getDoctorById(doctorId)
                 .onSuccess { doctor ->
                     _state.value = DoctorDetailState.Success(doctor)
-                    processAvailability(doctor.doctor_availability)
+                    processAvailability(doctor.availability)
                 }
                 .onFailure { error ->
                     _state.value = DoctorDetailState.Error(error.message ?: "Unknown error occurred")
@@ -61,8 +61,13 @@ class DoctorDetailViewModel(
     }
     
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun processAvailability(doctorAvailability: List<DoctorAvailability>) {
+    private fun processAvailability(doctorAvailability: List<DoctorAvailability>?) {
         val availableDays = mutableListOf<DayOfWeek>()
+        
+        if (doctorAvailability.isNullOrEmpty()) {
+            _availabilityState.value = AvailabilityState.NotAvailable
+            return
+        }
         
         doctorAvailability.forEach { availability ->
             if (availability.is_available) {
